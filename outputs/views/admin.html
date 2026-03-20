@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - TimeKids</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="light-mode">
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <div class="navbar-brand">
+        <h1>🌙 TimeKids Admin</h1>
+      </div>
+      <div class="navbar-menu">
+        <a href="/dashboard" class="nav-link">Back to App</a>
+        <button class="btn-logout" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Admin Container -->
+  <div class="admin-container">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-menu">
+        <button class="menu-item active" data-panel="dashboard">
+          <span>📊</span> Dashboard
+        </button>
+        <button class="menu-item" data-panel="content">
+          <span>🎵</span> Content Management
+        </button>
+        <button class="menu-item" data-panel="upload">
+          <span>📤</span> Upload Audio
+        </button>
+        <button class="menu-item" data-panel="stats">
+          <span>📈</span> Statistics
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-content">
+      <!-- Dashboard Panel -->
+      <div id="dashboardPanel" class="admin-panel active">
+        <h1>Dashboard</h1>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🎵</div>
+            <div class="stat-info">
+              <h3>Total Audio</h3>
+              <p id="totalAudio" class="stat-value">0</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">🎼</div>
+            <div class="stat-info">
+              <h3>Lullabies</h3>
+              <p id="totalLullabies" class="stat-value">0</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">📖</div>
+            <div class="stat-info">
+              <h3>Stories</h3>
+              <p id="totalStories" class="stat-value">0</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">📂</div>
+            <div class="stat-info">
+              <h3>Categories</h3>
+              <p id="totalCategories" class="stat-value">0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <button class="btn btn-primary" onclick="switchPanel('upload')">
+            📤 Upload New Audio
+          </button>
+          <button class="btn btn-secondary" onclick="switchPanel('content')">
+            🎵 Manage Content
+          </button>
+        </div>
+      </div>
+
+      <!-- Content Management Panel -->
+      <div id="contentPanel" class="admin-panel">
+        <h1>Content Management</h1>
+
+        <div class="content-filter">
+          <input type="text" id="contentSearch" placeholder="Search content..." class="search-input">
+          <select id="contentType" class="select-input">
+            <option value="">All Types</option>
+            <option value="lullaby">Lullabies</option>
+            <option value="story">Stories</option>
+          </select>
+        </div>
+
+        <div id="contentTable" class="content-table">
+          <div class="table-header">
+            <div class="col col-title">Title</div>
+            <div class="col col-type">Type</div>
+            <div class="col col-category">Category</div>
+            <div class="col col-actions">Actions</div>
+          </div>
+          <div id="contentList" class="table-body">
+            <p class="empty-message">Loading content...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Panel -->
+      <div id="uploadPanel" class="admin-panel">
+        <h1>Upload Audio Content</h1>
+
+        <form id="uploadForm" class="upload-form">
+          <div class="form-group">
+            <label for="uploadTitle">Title *</label>
+            <input type="text" id="uploadTitle" required class="form-input" placeholder="Content title">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="uploadType">Type *</label>
+              <select id="uploadType" required class="form-input">
+                <option value="">Select type</option>
+                <option value="lullaby">Lullaby</option>
+                <option value="story">Story</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="uploadCategory">Category *</label>
+              <input type="text" id="uploadCategory" required class="form-input" placeholder="e.g., Calm, Nature">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="uploadDescription">Description</label>
+            <textarea id="uploadDescription" class="form-textarea" placeholder="Optional description" rows="3"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="uploadDuration">Duration (seconds)</label>
+            <input type="number" id="uploadDuration" class="form-input" placeholder="e.g., 600" min="0">
+          </div>
+
+          <div class="form-group">
+            <label for="uploadFile">Audio File (MP3) *</label>
+            <div class="file-input-wrapper">
+              <input type="file" id="uploadFile" required accept=".mp3,audio/mpeg" class="file-input">
+              <span id="fileName" class="file-name">No file selected</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="uploadURL">Or Audio URL</label>
+            <input type="url" id="uploadURL" class="form-input" placeholder="https://example.com/audio.mp3">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-large">
+            <span id="uploadButtonText">Upload Content</span>
+            <span id="uploadSpinner" class="spinner" style="display: none;"></span>
+          </button>
+
+          <div id="uploadStatus" class="upload-status"></div>
+        </form>
+      </div>
+
+      <!-- Statistics Panel -->
+      <div id="statsPanel" class="admin-panel">
+        <h1>Statistics</h1>
+
+        <div class="stats-overview">
+          <div class="stat-section">
+            <h2>Content Distribution</h2>
+            <div id="distributionChart" class="chart-placeholder">
+              <p>Chart will appear here</p>
+            </div>
+          </div>
+
+          <div class="stat-section">
+            <h2>Category Breakdown</h2>
+            <div id="categoryChart" class="chart-placeholder">
+              <p>Chart will appear here</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <button class="modal-close" id="closeEditModal">&times;</button>
+      <h2>Edit Content</h2>
+
+      <form id="editForm" class="admin-form">
+        <div class="form-group">
+          <label for="editTitle">Title</label>
+          <input type="text" id="editTitle" class="form-input">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editType">Type</label>
+            <select id="editType" class="form-input">
+              <option value="lullaby">Lullaby</option>
+              <option value="story">Story</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="editCategory">Category</label>
+            <input type="text" id="editCategory" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editDescription">Description</label>
+          <textarea id="editDescription" class="form-textarea" rows="3"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/js/app.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>
