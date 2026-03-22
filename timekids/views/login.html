@@ -9,6 +9,7 @@
   <meta name="theme-color" content="#6bb5d6" />
   <link rel="stylesheet" href="/css/main.css" />
   <link rel="stylesheet" href="/css/auth.css" />
+  <link rel="stylesheet" href="/css/i18n.css" />
   <script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});</script>
 </head>
 <body>
@@ -53,41 +54,47 @@
   <div class="auth-form-side">
     <div class="auth-form-wrap">
       <div class="auth-form-header">
-        <h2>Welcome back 👋</h2>
-        <p>Sign in to continue your bedtime journey.</p>
+        <h2><span data-i18n="login.title">Welcome back 👋</span></h2>
+        <p><span data-i18n="login.subtitle">Sign in to continue your bedtime journey.</span></p>
       </div>
 
       <div id="form-message" class="form-message"></div>
 
       <form class="auth-form" id="login-form" novalidate>
         <div class="form-group">
-          <label class="form-label" for="email">Email address</label>
-          <input class="form-input" type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email" />
+          <label class="form-label" for="email" data-i18n="login.email">Email address</label>
+          <input class="form-input" type="email" id="email" name="email" placeholder="you@example.com" data-i18n-placeholder="login.email" required autocomplete="email" />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="password">Password</label>
+          <label class="form-label" for="password" data-i18n="login.password">Password</label>
           <div style="position:relative;">
-            <input class="form-input" type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password" style="padding-right:44px;" />
+            <input class="form-input" type="password" id="password" name="password" placeholder="••••••••" data-i18n-placeholder="login.password" required autocomplete="current-password" style="padding-right:44px;" />
             <button type="button" id="toggle-pw" class="btn-icon-sm" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);">👁️</button>
           </div>
         </div>
 
         <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
-          <span id="btn-text">Sign In</span>
+          <span id="btn-text"><span data-i18n="login.btn">Sign In</span></span>
           <span id="btn-spinner" style="display:none;">⏳</span>
         </button>
       </form>
 
       <div class="auth-footer">
-        Don't have an account? <a href="/register">Create one free →</a>
+        <span data-i18n="login.no_account">Don't have an account?</span> <a href="/register"><span data-i18n="login.create">Create one free →</span></a>
       </div>
     </div>
   </div>
 
 </div>
 
+<div id="lang-switcher-slot" style="position:fixed;bottom:20px;right:20px;z-index:100;"></div>
 <script type="module" src="/js/auth.js"></script>
+<script type="module">
+import { applyTranslations, renderLanguageSwitcher } from '/js/i18n.js';
+document.addEventListener('DOMContentLoaded', () => { applyTranslations(); renderLanguageSwitcher('#lang-switcher-slot'); });
+window.addEventListener('langchange', () => applyTranslations());
+</script>
 <script>
   // Toggle password visibility
   document.getElementById('toggle-pw').addEventListener('click', function() {

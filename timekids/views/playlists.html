@@ -8,6 +8,7 @@
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#6bb5d6" />
   <link rel="stylesheet" href="/css/main.css"/>
+  <link rel="stylesheet" href="/css/i18n.css" />
   <style>
     .playlist-grid {
       display: grid;
@@ -112,6 +113,7 @@
         <div id="user-avatar" style="width:28px;height:28px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:0.85rem;color:white;font-weight:700;">?</div>
         <div id="user-name" style="color:rgba(255,255,255,0.85);font-size:0.88rem;font-weight:700;">…</div>
       </a>
+      <div id="lang-switcher-slot" style="margin-bottom:8px;"></div>
       <button class="nav-link" id="logout-btn" style="width:100%;color:rgba(255,100,100,0.7);">
         <span class="nav-icon">🚪</span> Logout
       </button>
@@ -120,9 +122,9 @@
 
   <div class="main-content">
     <header class="topbar">
-      <h2 style="font-size:1.3rem;" id="page-heading">📋 My Playlists</h2>
+      <h2 style="font-size:1.3rem;" id="page-heading"><span data-i18n="pl.title">📋 My Playlists</span></h2>
       <div style="display:flex;gap:8px;">
-        <button id="btn-new-playlist" class="btn btn-primary btn-sm">+ New Playlist</button>
+        <button id="btn-new-playlist" class="btn btn-primary btn-sm"><span data-i18n="pl.new_btn">+ New Playlist</span></button>
         <button id="theme-toggle" class="btn btn-ghost btn-sm">🌙</button>
       </div>
     </header>
@@ -158,23 +160,23 @@
 <div class="modal-backdrop" id="new-playlist-modal">
   <div class="modal">
     <div class="modal-header">
-      <h3>📋 New Playlist</h3>
+      <h3><span data-i18n="pl.modal_title">📋 New Playlist</span></h3>
       <button class="btn btn-ghost btn-icon-sm" id="close-pl-modal">✕</button>
     </div>
     <div class="modal-body">
       <form id="new-playlist-form" style="display:flex;flex-direction:column;gap:14px;">
         <div class="form-group">
-          <label class="form-label">Playlist Name *</label>
-          <input class="form-input" name="name" type="text" placeholder="e.g. Bedtime Classics" required/>
+          <label class="form-label"><span data-i18n="pl.name_label">Playlist Name *</span></label>
+          <input class="form-input" name="name" type="text" placeholder="e.g. Bedtime Classics" data-i18n-placeholder="pl.name_ph" required/>
         </div>
         <div class="form-group">
-          <label class="form-label">Description</label>
-          <textarea class="form-input" name="description" rows="2" placeholder="Optional description…" style="resize:vertical;"></textarea>
+          <label class="form-label"><span data-i18n="pl.desc_label">Description</span></label>
+          <textarea class="form-input" name="description" rows="2" placeholder="Optional description…" data-i18n-placeholder="modal.desc" style="resize:vertical;"></textarea>
         </div>
         <div id="pl-form-msg" class="form-message"></div>
         <div style="display:flex;gap:10px;justify-content:flex-end;">
-          <button type="button" class="btn btn-ghost" id="cancel-pl-modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Create Playlist 📋</button>
+          <button type="button" class="btn btn-ghost" id="cancel-pl-modal"><span data-i18n="modal.cancel">Cancel</span></button>
+          <button type="submit" class="btn btn-primary"><span data-i18n="pl.create_btn">Create Playlist 📋</span></button>
         </div>
       </form>
     </div>
@@ -213,5 +215,12 @@
 <audio id="audio-player" preload="metadata"></audio>
 
 <script type="module" src="/js/playlists.js"></script>
+
+<script type="module">
+  import { applyTranslations, renderLanguageSwitcher } from '/js/i18n.js';
+  applyTranslations();
+  renderLanguageSwitcher('#lang-switcher-slot');
+  window.addEventListener('langchange', () => applyTranslations());
+</script>
 </body>
 </html>

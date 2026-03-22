@@ -9,6 +9,7 @@
   <meta name="theme-color" content="#6bb5d6" />
   <link rel="stylesheet" href="/css/main.css" />
   <link rel="stylesheet" href="/css/auth.css" />
+  <link rel="stylesheet" href="/css/i18n.css" />
   <script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});</script>
 </head>
 <body>
@@ -51,27 +52,27 @@
   <div class="auth-form-side">
     <div class="auth-form-wrap">
       <div class="auth-form-header">
-        <h2>Create your account ✨</h2>
-        <p>It only takes a moment.</p>
+        <h2><span data-i18n="register.title">Create your account ✨</span></h2>
+        <p><span data-i18n="register.subtitle">It only takes a moment.</span></p>
       </div>
 
       <div id="form-message" class="form-message"></div>
 
       <form class="auth-form" id="register-form" novalidate>
         <div class="form-group">
-          <label class="form-label" for="display_name">Your name</label>
-          <input class="form-input" type="text" id="display_name" name="display_name" placeholder="e.g. Sophie" required autocomplete="name" />
+          <label class="form-label" for="display_name" data-i18n="register.name">Your name</label>
+          <input class="form-input" type="text" id="display_name" name="display_name" placeholder="e.g. Sophie" data-i18n-placeholder="register.name" required autocomplete="name" />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="email">Email address</label>
-          <input class="form-input" type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email" />
+          <label class="form-label" for="email" data-i18n="register.email">Email address</label>
+          <input class="form-input" type="email" id="email" name="email" placeholder="you@example.com" data-i18n-placeholder="login.email" required autocomplete="email" />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="password">Password</label>
+          <label class="form-label" for="password" data-i18n="register.password">Password</label>
           <div style="position:relative;">
-            <input class="form-input" type="password" id="password" name="password" placeholder="At least 8 characters" required autocomplete="new-password" style="padding-right:44px;" />
+            <input class="form-input" type="password" id="password" name="password" placeholder="At least 8 characters" data-i18n-placeholder="register.pw_hint" required autocomplete="new-password" style="padding-right:44px;" />
             <button type="button" id="toggle-pw" class="btn-icon-sm" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);">👁️</button>
           </div>
           <div class="password-strength" id="pw-strength" style="display:none;">
@@ -82,7 +83,7 @@
 
         <!-- Plan selector -->
         <div class="form-group">
-          <label class="form-label">Choose your plan</label>
+          <label class="form-label"><span data-i18n="register.plan">Choose your plan</span></label>
           <div class="plan-selector">
             <label class="plan-card selected" id="plan-free-card">
               <input type="radio" name="plan" value="free" checked />
@@ -112,20 +113,26 @@
         </div>
 
         <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
-          <span id="btn-text">Create Account</span>
+          <span id="btn-text"><span data-i18n="register.btn">Create Account</span></span>
           <span id="btn-spinner" style="display:none;">⏳</span>
         </button>
       </form>
 
       <div class="auth-footer">
-        Already have an account? <a href="/login">Sign in →</a>
+        <span data-i18n="register.has_account">Already have an account?</span> <a href="/login"><span data-i18n="register.signin">Sign in →</span></a>
       </div>
     </div>
   </div>
 
 </div>
 
+<div id="lang-switcher-slot" style="position:fixed;bottom:20px;right:20px;z-index:100;"></div>
 <script type="module" src="/js/auth.js"></script>
+<script type="module">
+import { applyTranslations, renderLanguageSwitcher } from '/js/i18n.js';
+document.addEventListener('DOMContentLoaded', () => { applyTranslations(); renderLanguageSwitcher('#lang-switcher-slot'); });
+window.addEventListener('langchange', () => applyTranslations());
+</script>
 <script>
   // Toggle password visibility
   document.getElementById('toggle-pw').addEventListener('click', function() {

@@ -22,6 +22,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ── Security Middleware ────────────────────────────────────────────────────
+// Allow audio files to be loaded cross-origin
+app.use((req, res, next) => {
+  if (req.path.includes('/api/audio')) {
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+  next();
+});
+
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -29,7 +37,7 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'", 'https://www.youtube.com', 'https://cdn.jsdelivr.net'],
         frameSrc: ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
-        mediaSrc: ["'self'", 'https://*.supabase.co', 'blob:'],
+        mediaSrc: ["'self'", 'https://*.supabase.co', 'https://storage.googleapis.com', 'blob:', 'data:'],
         imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
         connectSrc: ["'self'", 'https://*.supabase.co', process.env.SUPABASE_URL],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
@@ -80,6 +88,7 @@ app.get('/dashboard', (_, res) => res.sendFile(path.join(viewsDir, 'dashboard.ht
 app.get('/profile', (_, res) => res.sendFile(path.join(viewsDir, 'profile.html')));
 app.get('/admin', (_, res) => res.sendFile(path.join(viewsDir, 'admin.html')));
 app.get('/playlists',  (_, res) => res.sendFile(path.join(viewsDir, 'playlists.html')));
+app.get('/children',   (_, res) => res.sendFile(path.join(viewsDir, 'children.html')));
 
 // ── 404 ────────────────────────────────────────────────────────────────────
 app.use((req, res) => {

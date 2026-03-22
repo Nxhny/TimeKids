@@ -1,0 +1,48 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# TimeKids — docker-compose.yml
+# For local development: hot-reload via nodemon + env file mounting
+# ─────────────────────────────────────────────────────────────────────────────
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: timekids:local
+    container_name: timekids_app
+    restart: unless-stopped
+
+    ports:
+      - "3000:3000"
+
+    # Mount .env from host so you can edit without rebuilding
+    env_file:
+      - .env
+
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+
+    # Mount source for live reload in dev
+    volumes:
+      - .:/app
+      - /app/node_modules   # anonymous volume keeps node_modules from host
+
+    # Override CMD for dev (nodemon)
+    command: npx nodemon server.js
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/auth/me"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Usage:
+#   docker-compose up --build       # first run
+#   docker-compose up               # subsequent runs
+#   docker-compose down             # stop
+# ─────────────────────────────────────────────────────────────────────────────

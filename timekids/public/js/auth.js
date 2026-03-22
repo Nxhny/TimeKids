@@ -1,27 +1,35 @@
 // public/js/auth.js
 // ─────────────────────────────────────────────────────────────────────────────
 // Handles login & register form submissions.
+// All user-facing strings go through t() for i18n support.
 // ─────────────────────────────────────────────────────────────────────────────
 import api from './api.js';
+import { t, applyTranslations, renderLanguageSwitcher } from './i18n.js';
 
-const path = window.location.pathname;
-const msgEl = document.getElementById('form-message');
+// ── Apply translations immediately on load ─────────────────────────────────
+applyTranslations();
+renderLanguageSwitcher('#lang-switcher-slot');
+window.addEventListener('langchange', () => applyTranslations());
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+const pathName = window.location.pathname;
+const msgEl    = document.getElementById('form-message');
 
 function showMessage(text, type = 'error') {
-  msgEl.className = `form-message ${type}`;
-  msgEl.innerHTML = `<span>${type === 'error' ? '❌' : '✅'}</span> ${text}`;
+  msgEl.className  = `form-message ${type}`;
+  msgEl.innerHTML  = `<span>${type === 'error' ? '❌' : '✅'}</span> ${text}`;
 }
 
 function setLoading(btn, loading) {
-  const text = btn.querySelector('#btn-text');
-  const spinner = btn.querySelector('#btn-spinner');
+  const textEl    = btn.querySelector('#btn-text');
+  const spinnerEl = btn.querySelector('#btn-spinner');
   btn.disabled = loading;
-  if (text) text.style.opacity = loading ? '0.5' : '1';
-  if (spinner) spinner.style.display = loading ? 'inline' : 'none';
+  if (textEl)    textEl.style.opacity   = loading ? '0.5' : '1';
+  if (spinnerEl) spinnerEl.style.display = loading ? 'inline' : 'none';
 }
 
-// ── LOGIN ─────────────────────────────────────────────────────────────────
-if (path === '/login') {
+// ── LOGIN ──────────────────────────────────────────────────────────────────
+if (pathName === '/login') {
   const form = document.getElementById('login-form');
   const btn  = document.getElementById('submit-btn');
 
@@ -30,26 +38,28 @@ if (path === '/login') {
     const email    = form.email.value.trim();
     const password = form.password.value;
 
-    if (!email || !password) { showMessage('Please fill in all fields.'); return; }
+    if (!email || !password) {
+      showMessage(t('login.error_fields'));
+      return;
+    }
 
     setLoading(btn, true);
     try {
       const data = await api.post('/auth/login', { email, password });
-      // Store token for API calls
       if (data.access_token) localStorage.setItem('tk_token', data.access_token);
       localStorage.setItem('tk_user', JSON.stringify(data.user));
-      showMessage('Welcome back! Redirecting…', 'success');
+      showMessage(t('login.redirecting'), 'success');
       setTimeout(() => { window.location.href = '/dashboard'; }, 800);
     } catch (err) {
-      showMessage(err.message || 'Login failed. Check your credentials.');
+      showMessage(err.message || t('login.error_invalid'));
     } finally {
       setLoading(btn, false);
     }
   });
 }
 
-// ── REGISTER ──────────────────────────────────────────────────────────────
-if (path === '/register') {
+// ── REGISTER ───────────────────────────────────────────────────────────────
+if (pathName === '/register') {
   const form = document.getElementById('register-form');
   const btn  = document.getElementById('submit-btn');
 
@@ -61,26 +71,63 @@ if (path === '/register') {
     const plan         = form.plan?.value || 'free';
 
     if (!display_name || !email || !password) {
-      showMessage('Please fill in all fields.'); return;
+      showMessage(t('login.error_fields'));
+      return;
     }
     if (password.length < 8) {
-      showMessage('Password must be at least 8 characters.'); return;
+      showMessage(t('register.pw_short'));
+      return;
     }
 
     setLoading(btn, true);
     try {
       await api.post('/auth/signup', { display_name, email, password, plan });
-      showMessage('Account created! Taking you to login…', 'success');
+      showMessage(t('register.success'), 'success');
       setTimeout(() => { window.location.href = '/login'; }, 1200);
     } catch (err) {
-      showMessage(err.message || 'Registration failed. Try again.');
+      showMessage(err.message || t('error.generic'));
     } finally {
       setLoading(btn, false);
     }
   });
+
+  // ── Password strength meter ──────────────────────────────────────────
+  document.getElementById('password')?.addEventListener('input', function () {
+    const val  = this.value;
+    const el   = document.getElementById('pw-strength');
+    const fill = document.getElementById('strength-fill');
+    const text = document.getElementById('strength-text');
+    if (!val) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+
+    let score = 0;
+    if (val.length >= 8)        score++;
+    if (/[A-Z]/.test(val))      score++;
+    if (/[0-9]/.test(val))      score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+
+    const levels = [
+      { w: '25%', bg: '#f87171', key: 'pw.weak'   },
+      { w: '50%', bg: '#fbbf24', key: 'pw.fair'   },
+      { w: '75%', bg: '#60a5fa', key: 'pw.good'   },
+      { w: '100%',bg: '#34d399', key: 'pw.strong' },
+    ];
+    const lvl = levels[Math.max(score - 1, 0)];
+    fill.style.width      = lvl.w;
+    fill.style.background = lvl.bg;
+    text.textContent      = t(lvl.key);
+  });
+
+  // ── Plan card selection ──────────────────────────────────────────────
+  document.querySelectorAll('input[name="plan"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+      document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+      this.closest('.plan-card').classList.add('selected');
+    });
+  });
 }
 
-// Redirect already-logged-in users away from auth pages
+// ── Redirect already-logged-in users ──────────────────────────────────────
 (async () => {
   const token = localStorage.getItem('tk_token');
   if (!token) return;

@@ -8,6 +8,7 @@
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#6bb5d6" />
   <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/i18n.css" />
   <style>
     .admin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
     .admin-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; text-align: center; }
@@ -42,6 +43,7 @@
       </div>
     </nav>
     <div class="sidebar-footer">
+      <div id="lang-switcher-slot" style="margin-bottom:8px;"></div>
       <button class="nav-link" id="logout-btn" style="width:100%;color:rgba(255,100,100,0.7);">
         <span class="nav-icon">🚪</span> Logout
       </button>
@@ -50,7 +52,7 @@
 
   <div class="main-content">
     <header class="topbar">
-      <h2 style="font-size:1.3rem;">⚙️ Admin Panel</h2>
+      <h2 style="font-size:1.3rem;"><span data-i18n="admin.title">⚙️ Admin Panel</span></h2>
       <button id="theme-toggle" class="btn btn-ghost btn-sm">🌙</button>
     </header>
 
@@ -61,15 +63,15 @@
         <div class="admin-stats">
           <div class="admin-stat">
             <div class="admin-stat-val" id="stat-total-audio" style="color:var(--primary);">—</div>
-            <div class="admin-stat-label">🎵 Total Tracks</div>
+            <div class="admin-stat-label"><span data-i18n="admin.total_tracks">🎵 Total Tracks</span></div>
           </div>
           <div class="admin-stat">
             <div class="admin-stat-val" id="stat-total-users" style="color:var(--accent);">—</div>
-            <div class="admin-stat-label">👥 Users</div>
+            <div class="admin-stat-label"><span data-i18n="admin.total_users">👥 Users</span></div>
           </div>
           <div class="admin-stat">
             <div class="admin-stat-val" id="stat-total-favs" style="color:var(--warm);">—</div>
-            <div class="admin-stat-label">❤️ Favourites</div>
+            <div class="admin-stat-label"><span data-i18n="admin.total_favs">❤️ Favourites</span></div>
           </div>
         </div>
         <p style="color:var(--text-muted);">Select a section from the sidebar to manage content and users.</p>
@@ -127,5 +129,12 @@
 </div>
 
 <script type="module" src="/js/admin.js"></script>
+
+<script type="module">
+  import { applyTranslations, renderLanguageSwitcher } from '/js/i18n.js';
+  applyTranslations();
+  renderLanguageSwitcher('#lang-switcher-slot');
+  window.addEventListener('langchange', () => applyTranslations());
+</script>
 </body>
 </html>

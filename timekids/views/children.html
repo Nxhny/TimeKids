@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Child Profiles — TimeKids 🌙</title>
+  <link rel="icon"     href="/assets/logo.png" type="image/png"/>
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#6bb5d6"/>
+  <link rel="stylesheet" href="/css/main.css"/>
+  <link rel="stylesheet" href="/css/i18n.css"/>
+  <style>
+    .children-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    .child-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 28px 20px;
+      text-align: center;
+      transition: var(--transition);
+      cursor: pointer;
+      position: relative;
+    }
+    .child-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+    .child-avatar {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--lav-100), var(--sky-100));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem;
+      margin: 0 auto 14px;
+      border: 3px solid var(--lav-200);
+    }
+    .child-name  { font-family: var(--font-display); font-size: 1.1rem; font-weight: 800; margin-bottom: 4px; }
+    .child-age   { font-size: .8rem; color: var(--text-muted); margin-bottom: 12px; }
+    .child-actions { display: flex; gap: 6px; justify-content: center; }
+    .child-card-new {
+      background: var(--sky-50);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-xl);
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px; min-height: 200px;
+      color: var(--text-muted);
+    }
+    .child-card-new:hover { border-color: var(--primary); color: var(--primary); background: var(--sky-100); }
+    .child-card-new .plus { font-size: 2rem; }
+
+    /* Emoji picker */
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .emoji-opt {
+      width: 40px; height: 40px;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 2px solid transparent;
+    }
+    .emoji-opt:hover   { background: var(--sky-100); }
+    .emoji-opt.active  { border-color: var(--primary); background: var(--sky-50); }
+
+    /* Active child indicator */
+    .active-child-bar {
+      display: flex; align-items: center; gap: 12px;
+      background: linear-gradient(135deg, var(--lav-100), var(--sky-100));
+      border: 1px solid var(--lav-200);
+      border-radius: var(--radius-lg);
+      padding: 12px 18px;
+      margin-bottom: 24px;
+    }
+    .active-child-bar .avatar { font-size: 1.8rem; }
+    .active-child-bar .info   { flex: 1; }
+    .active-child-bar .name   { font-weight: 800; font-size: .95rem; }
+    .active-child-bar .sub    { font-size: .75rem; color: var(--text-muted); }
+
+    /* Child select overlay badge on card */
+    .child-select-badge {
+      position: absolute; top: 10px; right: 10px;
+      background: var(--primary); color: white;
+      font-size: .65rem; font-weight: 800; padding: 3px 8px;
+      border-radius: 99px; display: none;
+    }
+    .child-card.selected .child-select-badge { display: block; }
+    .child-card.selected { border-color: var(--primary); background: var(--sky-50); }
+  </style>
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="app-layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="/assets/logo.png" alt="TimeKids"/>
+      <div class="sidebar-logo-text">Time<span>Kids</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title" data-i18n="nav.discover">Discover</div>
+        <a href="/dashboard" class="nav-link"><span class="nav-icon">🏠</span> <span data-i18n="nav.all">All Content</span></a>
+        <a href="/dashboard?view=favorites" class="nav-link"><span class="nav-icon">❤️</span> <span data-i18n="nav.favorites">Favourites</span></a>
+        <a href="/playlists" class="nav-link"><span class="nav-icon">📋</span> <span data-i18n="nav.playlists">Playlists</span></a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title" data-i18n="nav.library">My Library</div>
+        <a href="/children" class="nav-link active"><span class="nav-icon">👶</span> <span data-i18n="child.nav">Child Profiles</span></a>
+        <a href="/profile" class="nav-link"><span class="nav-icon">👤</span> <span data-i18n="nav.profile">My Profile</span></a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div id="lang-switcher-slot" style="margin-bottom:8px;"></div>
+      <a href="/profile" class="nav-link" style="margin-bottom:6px;">
+        <div id="user-avatar" style="width:28px;height:28px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:.85rem;color:white;font-weight:700;">?</div>
+        <div id="user-name" style="color:rgba(255,255,255,.85);font-size:.88rem;font-weight:700;">…</div>
+      </a>
+      <button class="nav-link" id="logout-btn" style="width:100%;color:rgba(255,100,100,.7);">
+        <span class="nav-icon">🚪</span> <span data-i18n="nav.logout">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <h2 style="font-family:var(--font-display);font-size:1.3rem;font-weight:800;" data-i18n="child.title">👶 Child Profiles</h2>
+      <div style="display:flex;gap:8px;">
+        <button id="btn-new-child" class="btn btn-primary btn-sm"><span data-i18n="child.new_btn">+ Add Child</span></button>
+        <button id="theme-toggle" class="btn btn-ghost btn-sm">🌙</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <!-- Active child indicator -->
+      <div class="active-child-bar" id="active-child-bar" style="display:none;">
+        <div class="avatar" id="active-avatar">🌙</div>
+        <div class="info">
+          <div class="name" id="active-name">—</div>
+          <div class="sub" data-i18n="child.active_label">Currently selected profile</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="clear-active-btn" data-i18n="child.clear_btn">Clear selection</button>
+      </div>
+
+      <!-- Children grid -->
+      <div class="children-grid" id="children-grid">
+        <div class="skeleton" style="height:220px;border-radius:var(--radius-xl);"></div>
+        <div class="skeleton" style="height:220px;border-radius:var(--radius-xl);"></div>
+        <div class="skeleton" style="height:220px;border-radius:var(--radius-xl);"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Child Modal -->
+<div class="modal-backdrop" id="child-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="child-modal-title" data-i18n="child.modal_add">➕ Add Child Profile</h3>
+      <button class="btn btn-ghost btn-icon-sm" id="close-child-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="child-form" style="display:flex;flex-direction:column;gap:16px;">
+        <input type="hidden" name="id" id="child-id-field"/>
+
+        <!-- Avatar emoji picker -->
+        <div class="form-group">
+          <label class="form-label" data-i18n="child.avatar_label">Avatar</label>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <div id="selected-emoji" style="width:52px;height:52px;border-radius:50%;background:var(--lav-100);border:3px solid var(--lav-200);display:flex;align-items:center;justify-content:center;font-size:1.8rem;">🌙</div>
+            <span style="font-size:.82rem;color:var(--text-muted);" data-i18n="child.pick_emoji">Pick an avatar below</span>
+          </div>
+          <div class="emoji-grid" id="emoji-grid">
+            <!-- Filled by JS -->
+          </div>
+          <input type="hidden" name="avatar_emoji" id="avatar-emoji-input" value="🌙"/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="child.name_label">Child's Name *</label>
+          <input class="form-input" type="text" name="name" id="child-name-input"
+            placeholder="e.g. Emma" data-i18n-placeholder="child.name_ph" required/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="child.age_label">Age (optional)</label>
+          <input class="form-input" type="number" name="age" id="child-age-input"
+            placeholder="e.g. 4" min="0" max="17" data-i18n-placeholder="child.age_ph"/>
+        </div>
+
+        <div id="child-form-msg" class="form-message"></div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" class="btn btn-ghost" id="cancel-child-modal" data-i18n="modal.cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="child-submit-btn">
+            <span id="child-submit-text" data-i18n="child.save_btn">Save Profile</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/js/children.js"></script>
+<script type="module">
+  import { applyTranslations, renderLanguageSwitcher } from '/js/i18n.js';
+  applyTranslations();
+  renderLanguageSwitcher('#lang-switcher-slot');
+  window.addEventListener('langchange', () => applyTranslations());
+</script>
+</body>
+</html>

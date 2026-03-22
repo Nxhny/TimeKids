@@ -1,0 +1,124 @@
+/* public/css/i18n.css — Language Switcher Styles */
+
+/* ── Language switcher widget ─────────────────────────────────────────────── */
+.lang-switcher {
+  position: relative;
+  display: inline-block;
+}
+
+.lang-current {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.75);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+}
+.lang-current:hover {
+  background: rgba(255,255,255,0.12);
+  color: white;
+}
+.lang-current-label {
+  display: none; /* show on wider sidebar */
+}
+
+/* Dropdown panel */
+.lang-dropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  min-width: 160px;
+  overflow: hidden;
+  display: none;
+  z-index: 200;
+  animation: lang-pop 0.2s ease;
+}
+.lang-dropdown.open { display: block; }
+
+@keyframes lang-pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+.lang-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: background 0.15s;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.lang-opt:last-child { border-bottom: none; }
+.lang-opt:hover { background: var(--sky-50); color: var(--primary); }
+.lang-opt.active {
+  background: var(--lav-100);
+  color: var(--accent-dark);
+}
+.lang-flag { font-size: 1.1rem; }
+.lang-name  { flex: 1; }
+.lang-opt.active::after {
+  content: '✓';
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 900;
+}
+
+/* In topbar (light background version) */
+.topbar .lang-switcher .lang-current {
+  background: var(--bg-main);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+.topbar .lang-switcher .lang-current:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.topbar .lang-switcher .lang-dropdown {
+  bottom: auto;
+  top: calc(100% + 8px);
+  left: auto;
+  right: 0;
+}
+
+/* ── RTL support placeholder ─────────────────────────────────────────────── */
+[dir="rtl"] .lang-dropdown { left: auto; right: 0; }
+
+/* ── Compact topbar variant ────────────────────────────────────────────── */
+#lang-switcher-topbar .lang-current {
+  background: var(--bg-main);
+  border-color: var(--border);
+  color: var(--text-secondary);
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+#lang-switcher-topbar .lang-current:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+#lang-switcher-topbar .lang-current-label { display: none; }
+#lang-switcher-topbar .lang-dropdown {
+  bottom: auto;
+  top: calc(100% + 6px);
+  right: 0;
+  left: auto;
+  min-width: 150px;
+}
+
+/* Show full label in sidebar switcher */
+#lang-switcher-slot .lang-current-label { display: inline; }

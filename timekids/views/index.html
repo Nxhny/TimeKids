@@ -8,6 +8,7 @@
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#0f1229" />
   <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/i18n.css" />
   <style>
     /* Landing-specific styles */
     .landing { min-height: 100vh; background: linear-gradient(160deg, #0f1229 0%, #1a1f3c 50%, #0f2042 100%); overflow: hidden; }
@@ -166,20 +167,21 @@
       <img src="/assets/logo.png" alt="TimeKids" />
       <span class="landing-logo-text">Time<span>Kids</span></span>
     </div>
+    <div id="lang-switcher-slot" style="margin-right:8px;"></div>
     <div class="landing-nav-links">
       <a href="/login" class="btn btn-ghost" style="color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.15);">Sign In</a>
-      <a href="/register" class="btn btn-primary">Get Started Free</a>
+      <a href="/register" class="btn btn-primary"><span data-i18n="landing.get_started">Get Started Free</span></a>
     </div>
   </nav>
 
   <!-- Hero -->
   <section class="hero">
     <div class="hero-badge"><span>🌙</span> Audio-only · Safe for children</div>
-    <h1>Where Little Dreams<br/><span class="highlight">Come Alive</span></h1>
+    <h1>Where Little Dreams<br/><span class="highlight"><span data-i18n="landing.h1b">Come Alive</span></span></h1>
     <p>Soothing lullabies and magical bedtime stories. Designed for parents, loved by children. Pure audio — calm, safe, and beautiful.</p>
     <div class="hero-actions">
-      <a href="/register" class="btn btn-primary btn-lg">Start for Free ✨</a>
-      <a href="/login" class="btn btn-ghost btn-lg" style="color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.2);">I have an account</a>
+      <a href="/register" class="btn btn-primary btn-lg"><span data-i18n="landing.cta">Start for Free ✨</span></a>
+      <a href="/login" class="btn btn-ghost btn-lg" style="color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.2);"><span data-i18n="landing.signin">I have an account</span></a>
     </div>
   </section>
 
@@ -188,7 +190,7 @@
 <!-- Features -->
 <section class="features">
   <div style="text-align:center;margin-bottom:52px;">
-    <h2>Everything you need for bedtime 💫</h2>
+    <h2><span data-i18n="landing.features">Everything you need for bedtime 💫</span></h2>
     <p style="color:var(--text-secondary);margin-top:10px;font-size:1.05rem;">Simple, calming, and completely safe for little ones.</p>
   </div>
   <div class="features-grid">
@@ -227,9 +229,9 @@
 
 <!-- CTA -->
 <section class="cta-section">
-  <h2>Ready for peaceful bedtimes? 🌙</h2>
+  <h2><span data-i18n="landing.cta2">Ready for peaceful bedtimes? 🌙</span></h2>
   <p>Join thousands of parents using TimeKids every night.</p>
-  <a href="/register" class="btn btn-primary btn-lg">Create Free Account</a>
+  <a href="/register" class="btn btn-primary btn-lg"><span data-i18n="landing.cta2_btn">Create Free Account</span></a>
 </section>
 
 <script>
@@ -258,6 +260,13 @@
       credentials: 'include'
     }).then(r => { if (r.ok) window.location.href = '/dashboard'; });
   }
+</script>
+
+<script type="module">
+  import { applyTranslations, renderLanguageSwitcher } from '/js/i18n.js';
+  applyTranslations();
+  renderLanguageSwitcher('#lang-switcher-slot');
+  window.addEventListener('langchange', () => applyTranslations());
 </script>
 </body>
 </html>

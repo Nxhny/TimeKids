@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import api from './api.js';
 import { showToast, formatTime, buildAudioCard, setupThemeToggle } from './utils.js';
+import { t, applyTranslations, renderLanguageSwitcher } from './i18n.js';
 import {
   saveResumeState,
   loadResumeState,
@@ -63,6 +64,9 @@ const kbdHint       = document.getElementById('kbd-hint');
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 (async () => {
   setupThemeToggle();
+  applyTranslations();
+  renderLanguageSwitcher('#lang-switcher-slot');
+  renderLanguageSwitcher('#lang-switcher-topbar');
   await guardAuth();
   await Promise.all([loadUserData(), loadFavoriteIds(), fetchPlaylists()]);
   await loadAudio();
@@ -73,8 +77,12 @@ const kbdHint       = document.getElementById('kbd-hint');
   setupSearch();
   setupSidebarToggle();
   setupResumeBanner();
+  await loadRecentlyPlayed();
+  setupOnboarding();
   handleUrlParams();
   initVisualizer(audioEl, vizCanvas);
+  startPlayTracking();
+  showActiveChildPill();
   registerKeyboardShortcuts({
     audioEl,
     onPlayPause: togglePlay,
@@ -156,7 +164,7 @@ async function loadFavoritesView() {
     const audio = favorites.map(f => f.audio_content).filter(Boolean);
     renderGrid(audio);
     document.getElementById('filter-bar').style.display = 'none';
-  } catch (err) { showToast('Failed to load favourites', 'error'); }
+  } catch (err) { showToast(t('toast.favs_fail'), 'error'); }
 }
 
 async function loadMyUploads() {
@@ -169,12 +177,12 @@ async function loadMyUploads() {
 }
 
 const AMBIENT = [
-  { id:'amb-1', title:'Gentle Rain',    type:'lullaby', category:'Ambient', audio_url:'https://www.youtube.com/embed/mPZkdNFkNps', is_youtube:true, description:'Soothing rain on leaves' },
-  { id:'amb-2', title:'Ocean Waves',    type:'lullaby', category:'Ambient', audio_url:'https://www.youtube.com/embed/V-_O7nl0Ii0', is_youtube:true, description:'Peaceful ocean waves' },
-  { id:'amb-3', title:'Forest Birds',   type:'lullaby', category:'Ambient', audio_url:'https://www.youtube.com/embed/Qm846KdZN_c', is_youtube:true, description:'Birds in a calm forest' },
-  { id:'amb-4', title:'White Noise',    type:'lullaby', category:'Ambient', audio_url:'https://www.youtube.com/embed/nMfPqeZjc2c', is_youtube:true, description:'Pure white noise' },
-  { id:'amb-5', title:'Crackling Fire', type:'lullaby', category:'Ambient', audio_url:'https://www.youtube.com/embed/L_LUpnjgPso', is_youtube:true, description:'Cozy fireplace sounds' },
-  { id:'amb-6', title:'Thunderstorm',   type:'lullaby', category:'Ambient', audio_url:'https://www.youtube.com/embed/yIQd2Ya0Ziw', is_youtube:true, description:'Distant thunder and rain' },
+  { id:'amb-1', title:'Gentle Rain',    type:'lullaby', category:'Ambient', audio_url:'https://www.youtube-nocookie.com/embed/mPZkdNFkNps', is_youtube:true, description:'Soothing rain on leaves' },
+  { id:'amb-2', title:'Ocean Waves',    type:'lullaby', category:'Ambient', audio_url:'https://www.youtube-nocookie.com/embed/V-_O7nl0Ii0', is_youtube:true, description:'Peaceful ocean waves' },
+  { id:'amb-3', title:'Forest Birds',   type:'lullaby', category:'Ambient', audio_url:'https://www.youtube-nocookie.com/embed/Qm846KdZN_c', is_youtube:true, description:'Birds in a calm forest' },
+  { id:'amb-4', title:'White Noise',    type:'lullaby', category:'Ambient', audio_url:'https://www.youtube-nocookie.com/embed/nMfPqeZjc2c', is_youtube:true, description:'Pure white noise' },
+  { id:'amb-5', title:'Crackling Fire', type:'lullaby', category:'Ambient', audio_url:'https://www.youtube-nocookie.com/embed/L_LUpnjgPso', is_youtube:true, description:'Cozy fireplace sounds' },
+  { id:'amb-6', title:'Thunderstorm',   type:'lullaby', category:'Ambient', audio_url:'https://www.youtube-nocookie.com/embed/yIQd2Ya0Ziw', is_youtube:true, description:'Distant thunder and rain' },
 ];
 
 // ── Render grid ────────────────────────────────────────────────────────────
@@ -205,13 +213,13 @@ function renderGrid(tracks) {
     // Delete
     card.querySelector('.delete-btn')?.addEventListener('click', async e => {
       e.stopPropagation();
-      if (!confirm('Delete this track?')) return;
+      if (!confirm(t('delete.confirm'))) return;
       try {
         await api.delete(`/audio/${id}`);
         card.style.opacity = '0'; card.style.transform = 'scale(.9)';
         card.style.transition = 'all .3s';
         setTimeout(() => card.remove(), 300);
-        showToast('Track deleted.', 'success');
+        showToast(t('toast.deleted'), 'success');
       } catch (err) { showToast(err.message, 'error'); }
     });
 
@@ -229,7 +237,7 @@ function openPlaylistPicker(card, track) {
   document.querySelectorAll('.pl-picker').forEach(p => p.remove());
 
   if (!S.playlists.length) {
-    showToast('Create a playlist first!', 'info');
+    showToast(t('toast.create_pl_first'), 'info');
     window.location.href = '/playlists';
     return;
   }
@@ -253,7 +261,7 @@ function openPlaylistPicker(card, track) {
       if (plId === 'new') { window.location.href = '/playlists'; return; }
       try {
         await api.post(`/playlists/${plId}/tracks`, { audioId: track.id });
-        showToast('Added to playlist! 📋', 'success');
+        showToast(t('toast.pl_added'), 'success');
       } catch (err) { showToast(err.message, 'error'); }
     });
   });
@@ -311,7 +319,7 @@ async function toggleFavorite(audioId, btnEl) {
     const { favorited } = await api.post(`/favorites/${audioId}`);
     favorited ? S.favorites.add(audioId) : S.favorites.delete(audioId);
     if (btnEl) { btnEl.classList.toggle('active', favorited); btnEl.textContent = favorited ? '❤️' : '🤍'; }
-    showToast(favorited ? 'Added to favourites! ❤️' : 'Removed from favourites', favorited ? 'success' : 'info');
+    showToast(favorited ? t('fav.added') : t('fav.removed'), favorited ? 'success' : 'info');
     if (S.currentTrack?.id === audioId) updatePlayerFavBtn();
   } catch (err) { showToast(err.message, 'error'); }
 }
@@ -330,7 +338,7 @@ function setupPlayer() {
 
   audioEl.addEventListener('ended', () => {
     clearResumeState();
-    if (S.isLooping) { audioEl.currentTime = 0; audioEl.play(); }
+    if (S.isLooping) { audioEl.currentTime = 0; audioEl.play().catch(() => {}); }
     else playNext();
   });
 
@@ -344,7 +352,7 @@ function setupPlayer() {
     S.isLooping = !S.isLooping;
     loopBtn.classList.toggle('active', S.isLooping);
     audioEl.loop = S.isLooping;
-    flashKbdHint(S.isLooping ? '🔁 Loop on' : '🔁 Loop off');
+    flashKbdHint(S.isLooping ? t('player.loop_on') : t('player.loop_off'));
   });
 
   muteBtn.addEventListener('click', toggleMute);
@@ -363,9 +371,30 @@ function setupPlayer() {
   });
 
   audioEl.volume = 0.8;
+
+  // Handle audio load/play errors (CORS, 404, Supabase storage issues)
+  audioEl.addEventListener('error', (e) => {
+    const code = audioEl.error?.code;
+    const msgs = {
+      1: 'Playback aborted.',
+      2: 'Network error — check your connection.',
+      3: 'Audio decoding failed. The file may be corrupted.',
+      4: 'Audio format not supported or file not accessible.',
+    };
+    const msg = msgs[code] || 'Could not load audio.';
+    showToast(`❌ ${msg}`, 'error');
+    playBtn.textContent = '▶';
+    S.isPlaying = false;
+    console.error('[AudioError]', code, msg, audioEl.src);
+  });
+
+  // Visual loading indicator on the play button
+  audioEl.addEventListener('waiting', () => { playBtn.textContent = '⏳'; });
+  audioEl.addEventListener('playing', () => { playBtn.textContent = '⏸'; S.isPlaying = true; });
+  audioEl.addEventListener('pause',   () => { playBtn.textContent = '▶'; S.isPlaying = false; });
 }
 
-function playTrack(track, playlistContext = []) {
+async function playTrack(track, playlistContext = []) {
   S.currentTrack = track;
   S.playlist     = playlistContext;
 
@@ -375,16 +404,54 @@ function playTrack(track, playlistContext = []) {
     return;
   }
 
+  // Stop any current playback cleanly
+  audioEl.pause();
+  audioEl.currentTime = 0;
+
+  // Show loading state
+  updatePlayerBar(track, false);
+  playBtn.textContent = '⏳';
+
+  // Set source and load
   audioEl.src = track.audio_url;
-  audioEl.play();
-  S.isPlaying = true;
-  updatePlayerBar(track, true);
-  setupMediaSession(track, {
-    onPlay:  () => { audioEl.play(); playBtn.textContent = '⏸'; },
-    onPause: () => { audioEl.pause(); playBtn.textContent = '▶'; },
-    onNext:  playNext,
-    onPrev:  playPrev,
-  });
+  audioEl.load(); // explicit load() call ensures fresh request
+
+  // Wait for browser to have enough data, then play
+  try {
+    await new Promise((resolve, reject) => {
+      const onCanPlay = () => { cleanup(); resolve(); };
+      const onError   = () => { cleanup(); reject(audioEl.error); };
+      const cleanup   = () => {
+        audioEl.removeEventListener('canplay', onCanPlay);
+        audioEl.removeEventListener('error',   onError);
+      };
+      audioEl.addEventListener('canplay', onCanPlay, { once: true });
+      audioEl.addEventListener('error',   onError,   { once: true });
+      // Safety timeout — if 8s pass and neither fires, try playing anyway
+      setTimeout(() => { cleanup(); resolve(); }, 8000);
+    });
+
+    await audioEl.play();
+    S.isPlaying = true;
+    updatePlayerBar(track, true);
+    setupMediaSession(track, {
+      onPlay:  async () => { await audioEl.play(); playBtn.textContent = '⏸'; },
+      onPause: ()      => { audioEl.pause(); playBtn.textContent = '▶'; },
+      onNext:  playNext,
+      onPrev:  playPrev,
+    });
+
+  } catch (err) {
+    // Autoplay blocked by browser policy — user must click play manually
+    if (err?.name === 'NotAllowedError') {
+      showToast('▶ Click Play to start (browser autoplay blocked)', 'info');
+      updatePlayerBar(track, false); // show paused state
+    } else {
+      showToast('❌ Could not play this track. Check that the file is accessible.', 'error');
+      console.error('[playTrack error]', err, track.audio_url);
+      playBtn.textContent = '▶';
+    }
+  }
 }
 
 function updatePlayerBar(track, playing) {
@@ -401,11 +468,22 @@ function updatePlayerFavBtn() {
   favPlayerBtn.textContent = S.favorites.has(S.currentTrack.id) ? '❤️' : '🤍';
 }
 
-function togglePlay() {
+async function togglePlay() {
   if (!S.currentTrack) return;
   if (S.currentTrack.is_youtube) return;
-  if (audioEl.paused) { audioEl.play(); S.isPlaying = true; playBtn.textContent = '⏸'; }
-  else                { audioEl.pause(); S.isPlaying = false; playBtn.textContent = '▶'; }
+  if (audioEl.paused) {
+    try {
+      await audioEl.play();
+      S.isPlaying = true;
+      playBtn.textContent = '⏸';
+    } catch (err) {
+      showToast('▶ Playback blocked — click play again', 'info');
+    }
+  } else {
+    audioEl.pause();
+    S.isPlaying = false;
+    playBtn.textContent = '▶';
+  }
 }
 
 function toggleMute() {
@@ -420,7 +498,7 @@ function toggleMute() {
     volumeSlider.value = 0;
     muteBtn.textContent = '🔇';
   }
-  flashKbdHint(audioEl.muted ? '🔇 Muted' : '🔊 Unmuted');
+  flashKbdHint(audioEl.muted ? t('player.muted') : t('player.unmuted'));
 }
 
 function playNext() {
@@ -439,23 +517,169 @@ function playPrev() {
 
 // ── YouTube Modal ──────────────────────────────────────────────────────────
 const ytModal      = document.getElementById('yt-play-modal');
-const ytIframe     = document.getElementById('yt-iframe');
 const ytModalTitle = document.getElementById('yt-modal-title');
 const ytModalCat   = document.getElementById('yt-modal-category');
 const closeYtBtn   = document.getElementById('close-yt-modal');
 const ytFavBtn     = document.getElementById('yt-fav-btn');
 const ytPlBtn      = document.getElementById('yt-pl-btn');
 
-function openYouTubeModal(track) {
-  ytModalTitle.textContent = track.title;
-  ytModalCat.textContent   = `${track.type === 'lullaby' ? '🎵' : '📖'} ${track.category}`;
-  ytIframe.src = track.audio_url + (track.audio_url.includes('?') ? '&autoplay=1' : '?autoplay=1');
-  ytFavBtn.textContent = S.favorites.has(track.id) ? '❤️ Favourited' : '🤍 Favourite';
-  ytModal.classList.add('open');
+// YouTube IFrame Player instance (managed by YouTube API)
+let ytPlayer       = null;
+let ytCurrentTrack = null;
+
+/**
+ * Extract the raw video ID from a stored embed URL.
+ * Handles both youtube.com/embed/ID and youtube-nocookie.com/embed/ID
+ */
+function extractVideoId(audioUrl) {
+  const m = audioUrl.match(/\/embed\/([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
 }
 
-closeYtBtn.addEventListener('click', () => { ytModal.classList.remove('open'); ytIframe.src = ''; });
-ytModal.addEventListener('click', e => { if (e.target === ytModal) { ytModal.classList.remove('open'); ytIframe.src = ''; } });
+function openYouTubeModal(track) {
+  ytCurrentTrack = track;
+  ytModalTitle.textContent = track.title;
+  ytModalCat.textContent   = `${track.type === 'lullaby' ? '🎵' : '📖'} ${track.category}`;
+  ytFavBtn.textContent     = S.favorites.has(track.id) ? '❤️ Favourited' : '🤍 Favourite';
+
+  // Reset UI state
+  showYtLoading();
+  ytModal.classList.add('open');
+
+  const videoId = extractVideoId(track.audio_url);
+  if (!videoId) {
+    showYtError(track.audio_url);
+    return;
+  }
+
+  // Destroy previous player
+  if (ytPlayer) {
+    try { ytPlayer.destroy(); } catch {}
+    ytPlayer = null;
+  }
+
+  // Ensure the player div exists (recreate after destroy)
+  let playerDiv = document.getElementById('yt-player');
+  if (!playerDiv) {
+    playerDiv = document.createElement('div');
+    playerDiv.id = 'yt-player';
+    document.getElementById('yt-player-container').prepend(playerDiv);
+  }
+
+  if (window.YT?.Player) {
+    createYTPlayer(videoId, playerDiv);
+  } else {
+    // API not yet loaded — queue it
+    window._ytPendingVideoId  = videoId;
+    window._ytPendingPlayerDiv = playerDiv;
+  }
+}
+
+function createYTPlayer(videoId, playerDiv) {
+  ytPlayer = new window.YT.Player(playerDiv, {
+    videoId,
+    height: '100%',
+    width:  '100%',
+    playerVars: {
+      autoplay:        1,
+      rel:             0,
+      modestbranding:  1,
+      playsinline:     1,
+      enablejsapi:     1,
+      origin:          window.location.origin,
+    },
+    events: {
+      onReady: (e) => {
+        hideYtLoading();
+        e.target.playVideo();
+      },
+      onError: (e) => {
+        // Error codes:
+        //   2   = invalid parameter
+        //   5   = HTML5 player error
+        //   100 = video not found / private
+        //   101 / 150 / 153 = embedding not allowed by video owner
+        const code = e.data;
+        console.warn('[YouTube Player Error]', code);
+        if (ytCurrentTrack) showYtError(ytCurrentTrack.audio_url, code);
+      },
+      onStateChange: (e) => {
+        if (e.data === window.YT?.PlayerState?.PLAYING) hideYtLoading();
+      },
+    },
+  });
+}
+
+// Listen for YouTube IFrame API ready event (dispatched by the global stub in HTML)
+function handleYtApiReady() {
+  if (window._ytPendingVideoId && window._ytPendingPlayerDiv) {
+    createYTPlayer(window._ytPendingVideoId, window._ytPendingPlayerDiv);
+    delete window._ytPendingVideoId;
+    delete window._ytPendingPlayerDiv;
+  }
+}
+
+// API may already be ready (race condition if app.js loads after API)
+if (window._ytApiReady) {
+  handleYtApiReady();
+} else {
+  window.addEventListener('ytApiReady', handleYtApiReady, { once: true });
+}
+
+function showYtLoading() {
+  const loading = document.getElementById('yt-loading');
+  const err     = document.getElementById('yt-embed-error');
+  if (loading) loading.style.display = 'flex';
+  if (err)     err.style.display     = 'none';
+}
+
+function hideYtLoading() {
+  const loading = document.getElementById('yt-loading');
+  if (loading) loading.style.display = 'none';
+}
+
+function showYtError(audioUrl, code) {
+  const loading = document.getElementById('yt-loading');
+  const err     = document.getElementById('yt-embed-error');
+  if (loading) loading.style.display = 'none';
+  if (err)     err.style.display     = 'flex';
+
+  // Build direct YouTube watch link from embed URL
+  const videoId  = extractVideoId(audioUrl) || '';
+  const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  const link     = document.getElementById('yt-fallback-link');
+  if (link) link.href = watchUrl;
+
+  // Human-readable error note
+  const codeMap = {
+    100: 'Video not found or is private.',
+    101: 'Embedding disabled by the video owner.',
+    150: 'Embedding disabled by the video owner.',
+    153: 'Embedding disabled by the video owner.',
+  };
+  const desc = document.querySelector('#yt-embed-error p');
+  if (desc && codeMap[code]) desc.textContent = codeMap[code];
+}
+
+function closeYouTubeModal() {
+  ytModal.classList.remove('open');
+  // Stop and destroy player to stop audio
+  if (ytPlayer) {
+    try { ytPlayer.stopVideo(); ytPlayer.destroy(); } catch {}
+    ytPlayer = null;
+  }
+  // Recreate empty player div for next use
+  const container = document.getElementById('yt-player-container');
+  const old = document.getElementById('yt-player');
+  if (old) old.remove();
+  const fresh = document.createElement('div');
+  fresh.id = 'yt-player';
+  if (container) container.prepend(fresh);
+  showYtLoading();
+}
+
+closeYtBtn.addEventListener('click', closeYouTubeModal);
+ytModal.addEventListener('click', e => { if (e.target === ytModal) closeYouTubeModal(); });
 
 ytFavBtn.addEventListener('click', async () => {
   if (!S.currentTrack) return;
@@ -465,7 +689,7 @@ ytFavBtn.addEventListener('click', async () => {
 });
 
 ytPlBtn.addEventListener('click', () => {
-  if (!S.currentTrack || !S.playlists.length) { showToast('Create a playlist first!', 'info'); return; }
+  if (!S.currentTrack || !S.playlists.length) { showToast(t('toast.create_pl_first'), 'info'); return; }
   // Quick picker in the modal footer area
   const existingPicker = ytModal.querySelector('.pl-picker');
   if (existingPicker) { existingPicker.remove(); return; }
@@ -485,7 +709,7 @@ ytPlBtn.addEventListener('click', () => {
       picker.remove();
       try {
         await api.post(`/playlists/${item.dataset.plId}/tracks`, { audioId: S.currentTrack.id });
-        showToast('Added to playlist! 📋', 'success');
+        showToast(t('toast.pl_added'), 'success');
       } catch (err) { showToast(err.message, 'error'); }
     });
   });
@@ -505,23 +729,34 @@ function setupResumeBanner() {
 
   art.textContent     = resume.type === 'lullaby' ? '🎵' : '📖';
   titleEl.textContent = resume.title;
-  subEl.textContent   = `Last at ${formatTime(resume.currentTime)} · ${resume.category}`;
+  subEl.textContent = `${t('resume.sub')} · ${formatTime(resume.currentTime)}`;
   banner.classList.add('visible');
 
-  playResume.addEventListener('click', () => {
+  playResume.addEventListener('click', async () => {
     banner.classList.remove('visible');
     if (resume.is_youtube) {
       S.currentTrack = resume;
       openYouTubeModal(resume);
     } else {
-      audioEl.src = resume.audio_url;
-      audioEl.addEventListener('loadedmetadata', () => {
-        audioEl.currentTime = resume.currentTime;
-        audioEl.play();
-      }, { once: true });
       S.currentTrack = resume;
-      S.isPlaying    = true;
-      updatePlayerBar(resume, true);
+      updatePlayerBar(resume, false);
+      playBtn.textContent = '⏳';
+      audioEl.src = resume.audio_url;
+      audioEl.load();
+      try {
+        await new Promise((resolve, reject) => {
+          audioEl.addEventListener('canplay', resolve, { once: true });
+          audioEl.addEventListener('error',   reject,  { once: true });
+          setTimeout(resolve, 8000);
+        });
+        if (resume.currentTime > 0) audioEl.currentTime = resume.currentTime;
+        await audioEl.play();
+        S.isPlaying = true;
+        updatePlayerBar(resume, true);
+      } catch (err) {
+        showToast('▶ Click play to resume', 'info');
+        updatePlayerBar(resume, false);
+      }
     }
   });
 
@@ -564,12 +799,12 @@ function startSleepTimer(mins) {
     timerCountdown.textContent = d;
     if (S.sleepSeconds <= 0) {
       cancelSleepTimer();
-      audioEl.pause(); ytIframe.src = '';
+      audioEl.pause(); closeYouTubeModal();
       S.isPlaying = false; playBtn.textContent = '▶';
-      showToast('😴 Sleep timer ended — sweet dreams!', 'info');
+      showToast(t('timer.ended'), 'info');
     }
   }, 1000);
-  showToast(`⏱️ Sleep timer: ${mins} min`, 'success');
+  showToast(t('timer.set', { min: mins }), 'success');
 }
 
 function cancelSleepTimer() {
@@ -614,7 +849,7 @@ function setupModal() {
     ytSubmit.disabled = true; ytSubmit.textContent = '⏳ Adding…'; ytMsg.className = 'form-message';
     try {
       await api.post('/audio/youtube', body);
-      showToast('🎵 Track added!', 'success');
+      showToast(t('toast.track_added'), 'success');
       modal.classList.remove('open'); ytForm.reset();
       await loadAudio(); await fetchPlaylists();
     } catch (err) {
@@ -633,7 +868,7 @@ function setupModal() {
     upSubmit.disabled = true; upSubmit.textContent = '⏳ Uploading…';
     try {
       await api.postForm('/audio/upload', new FormData(upForm));
-      showToast('📤 Uploaded!', 'success');
+      showToast(t('toast.uploaded'), 'success');
       modal.classList.remove('open'); upForm.reset();
       await loadAudio();
     } catch (err) {
@@ -665,7 +900,7 @@ async function setView(view) {
   document.querySelectorAll('[data-view]').forEach(l => l.classList.remove('active'));
   document.querySelector(`[data-view="${view}"]`)?.classList.add('active');
 
-  const titles = { all:'🏠 All Content', lullaby:'🎵 Lullabies', story:'📖 Stories', favorites:'❤️ Favourites', ambient:'🌧️ Ambient Sounds', 'my-uploads':'📤 My Uploads' };
+  const titles = { all:t('view.all'), lullaby:t('view.lullaby'), story:t('view.story'), favorites:t('view.favorites'), ambient:t('view.ambient'), 'my-uploads':t('view.my-uploads') };
   pageTitle.textContent = titles[view] || 'Content';
 
   const filterBar = document.getElementById('filter-bar');
@@ -714,3 +949,129 @@ function emptyState(icon, title, body = '') {
   return `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">${icon}</div><h3>${title}</h3>${body ? `<p>${body}</p>` : ''}</div>`;
 }
 function escHtml(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Recently Played ────────────────────────────────────────────────────────
+
+/** Load and render the recently-played row */
+async function loadRecentlyPlayed() {
+  try {
+    const { plays } = await api.get('/children/recent');
+    const section   = document.getElementById('recently-played-section');
+    const grid      = document.getElementById('recently-played-grid');
+    if (!plays?.length) return;
+
+    section.style.display = 'block';
+    grid.innerHTML = plays.map((p, i) => {
+      const t  = p.audio_content;
+      if (!t) return '';
+      const emojis = ['🎵','🌙','⭐','🌟','💫','🎼','📖','🌸'];
+      const emoji  = emojis[i % 8];
+      const pct    = t.duration ? Math.round((p.position / t.duration) * 100) : 0;
+      return `
+        <div class="audio-card" data-id="${t.id}" style="min-width:160px;max-width:160px;cursor:pointer;flex-shrink:0;">
+          <div class="audio-card-art ${t.type === 'lullaby' ? '' : 'story-art'}" style="aspect-ratio:1;">
+            <span style="font-size:2rem;position:relative;z-index:1;">${emoji}</span>
+          </div>
+          <div class="audio-card-body" style="padding:10px;">
+            <div class="audio-card-title" style="font-size:.82rem;">${escHtml(t.title)}</div>
+            ${pct > 0 ? `
+            <div style="margin-top:6px;">
+              <div style="height:3px;background:var(--sky-100);border-radius:99px;overflow:hidden;">
+                <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:99px;"></div>
+              </div>
+              <div style="font-size:.68rem;color:var(--text-muted);margin-top:2px;">${formatTime(p.position)} played</div>
+            </div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+
+    // Wire clicks
+    grid.querySelectorAll('.audio-card').forEach(card => {
+      const id    = card.dataset.id;
+      const play  = plays.find(p => p.audio_content?.id === id);
+      if (!play?.audio_content) return;
+      card.addEventListener('click', () => {
+        const track = play.audio_content;
+        S.currentTrack = track;
+        if (track.is_youtube) {
+          openYouTubeModal(track);
+        } else {
+          audioEl.src = track.audio_url;
+          audioEl.load();
+          audioEl.addEventListener('canplay', async () => {
+            if (play.position > 0) audioEl.currentTime = play.position;
+            try { await audioEl.play(); } catch {}
+          }, { once: true });
+          S.isPlaying = true;
+          updatePlayerBar(track, true);
+        }
+      });
+    });
+  } catch { /* quiet — recently played is non-critical */ }
+}
+
+/** Record a play event every 10 seconds while playing */
+function startPlayTracking() {
+  let tracker;
+  audioEl.addEventListener('play', () => {
+    tracker = setInterval(() => {
+      if (!S.currentTrack?.id || audioEl.paused) return;
+      api.post('/children/recent', {
+        audioId:  S.currentTrack.id,
+        position: Math.floor(audioEl.currentTime),
+      }).catch(() => {});
+    }, 10_000);
+  });
+  audioEl.addEventListener('pause', () => clearInterval(tracker));
+  audioEl.addEventListener('ended', () => {
+    clearInterval(tracker);
+    if (S.currentTrack?.id) {
+      api.post('/children/recent', { audioId: S.currentTrack.id, position: 0 }).catch(() => {});
+    }
+  });
+}
+
+// ── First-login Onboarding ─────────────────────────────────────────────────
+
+const ONBOARD_KEY = 'tk_onboarded';
+
+function setupOnboarding() {
+  if (localStorage.getItem(ONBOARD_KEY)) return;
+
+  const modal = document.getElementById('onboard-modal');
+  if (!modal) return;
+
+  // Delay so dashboard loads first
+  setTimeout(() => {
+    modal.classList.add('open');
+    applyTranslations(modal);
+  }, 600);
+
+  document.getElementById('onboard-close-btn').addEventListener('click', () => {
+    modal.classList.remove('open');
+    localStorage.setItem(ONBOARD_KEY, '1');
+  });
+}
+
+// ── Active child topbar pill ───────────────────────────────────────────────
+
+function showActiveChildPill() {
+  try {
+    const child = JSON.parse(localStorage.getItem('tk_active_child') || 'null');
+    const pill  = document.getElementById('active-child-pill');
+    if (!pill) return;
+    if (child) {
+      document.getElementById('topbar-child-emoji').textContent = child.avatar_emoji || '🌙';
+      document.getElementById('topbar-child-name').textContent  = child.name;
+      pill.style.display = 'flex';
+      // Clear link
+      pill.querySelector('a').addEventListener('click', e => {
+        e.preventDefault();
+        localStorage.removeItem('tk_active_child');
+        pill.style.display = 'none';
+      });
+    } else {
+      pill.style.display = 'none';
+    }
+  } catch {}
+}

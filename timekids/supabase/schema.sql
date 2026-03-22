@@ -140,16 +140,16 @@ CREATE POLICY "favorites: users can manage own"
 -- 6. SEED DATA — sample tracks (YouTube-based, free to use)
 -- ─────────────────────────────────────────────────────────────────────────────
 INSERT INTO public.audio_content (title, type, category, audio_url, description, is_youtube) VALUES
-  ('Brahms Lullaby',         'lullaby', 'Classical',  'https://www.youtube.com/embed/YcFGdB9BLYA', 'The classic Brahms lullaby — perfect for sleep.', TRUE),
-  ('Twinkle Twinkle',        'lullaby', 'Children',   'https://www.youtube.com/embed/yCjJyiqpAuU', 'Gentle piano rendition of Twinkle Twinkle.', TRUE),
-  ('Ocean Waves & Piano',    'lullaby', 'Nature',     'https://www.youtube.com/embed/1ZYbU82GVz4', 'Soothing ocean waves with soft piano.', TRUE),
-  ('Moonlight Sonata',       'lullaby', 'Classical',  'https://www.youtube.com/embed/4Tr0otuiQuU', 'Beethoven''s gentle moonlight sonata.', TRUE),
-  ('Rain on Leaves',         'lullaby', 'Nature',     'https://www.youtube.com/embed/mPZkdNFkNps', 'Calming rain sounds on forest leaves.', TRUE),
-  ('Soft Piano Meditation',  'lullaby', 'Piano',      'https://www.youtube.com/embed/lFcSrYw2lGQ', 'Peaceful piano music for deep relaxation.', TRUE),
-  ('The Velveteen Rabbit',   'story',   'Classic',    'https://www.youtube.com/embed/7TcPvGKSqeE', 'The beloved story of a toy rabbit.', TRUE),
-  ('Goodnight Moon',         'story',   'Children',   'https://www.youtube.com/embed/cT4BEdpS3FE', 'A calming bedtime story classic.', TRUE),
-  ('The Snowy Day',          'story',   'Winter',     'https://www.youtube.com/embed/4Gsg4sIRlBY', 'A magical winter day adventure.', TRUE),
-  ('Where the Wild Things Are', 'story','Adventure',  'https://www.youtube.com/embed/pBmVwvGIr8A', 'Maurice Sendak''s classic tale.', TRUE)
+  ('Brahms Lullaby',         'lullaby', 'Classical',  'https://www.youtube-nocookie.com/embed/YcFGdB9BLYA', 'The classic Brahms lullaby — perfect for sleep.', TRUE),
+  ('Twinkle Twinkle',        'lullaby', 'Children',   'https://www.youtube-nocookie.com/embed/yCjJyiqpAuU', 'Gentle piano rendition of Twinkle Twinkle.', TRUE),
+  ('Ocean Waves & Piano',    'lullaby', 'Nature',     'https://www.youtube-nocookie.com/embed/1ZYbU82GVz4', 'Soothing ocean waves with soft piano.', TRUE),
+  ('Moonlight Sonata',       'lullaby', 'Classical',  'https://www.youtube-nocookie.com/embed/4Tr0otuiQuU', 'Beethoven''s gentle moonlight sonata.', TRUE),
+  ('Rain on Leaves',         'lullaby', 'Nature',     'https://www.youtube-nocookie.com/embed/mPZkdNFkNps', 'Calming rain sounds on forest leaves.', TRUE),
+  ('Soft Piano Meditation',  'lullaby', 'Piano',      'https://www.youtube-nocookie.com/embed/lFcSrYw2lGQ', 'Peaceful piano music for deep relaxation.', TRUE),
+  ('The Velveteen Rabbit',   'story',   'Classic',    'https://www.youtube-nocookie.com/embed/7TcPvGKSqeE', 'The beloved story of a toy rabbit.', TRUE),
+  ('Goodnight Moon',         'story',   'Children',   'https://www.youtube-nocookie.com/embed/cT4BEdpS3FE', 'A calming bedtime story classic.', TRUE),
+  ('The Snowy Day',          'story',   'Winter',     'https://www.youtube-nocookie.com/embed/4Gsg4sIRlBY', 'A magical winter day adventure.', TRUE),
+  ('Where the Wild Things Are', 'story','Adventure',  'https://www.youtube-nocookie.com/embed/pBmVwvGIr8A', 'Maurice Sendak''s classic tale.', TRUE)
 ON CONFLICT DO NOTHING;
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -215,3 +215,48 @@ ALTER TABLE public.listen_history ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "listen_history: users manage own"
   ON public.listen_history FOR ALL
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 10. CHILD PROFILES
+-- Each parent account can manage multiple child profiles.
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.child_profiles (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  parent_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name          VARCHAR NOT NULL,
+  age           SMALLINT CHECK (age BETWEEN 0 AND 17),
+  avatar_emoji  VARCHAR DEFAULT '🌙',
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_child_profiles_parent ON public.child_profiles(parent_id);
+
+ALTER TABLE public.child_profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "child_profiles: parents manage own"
+  ON public.child_profiles FOR ALL
+  USING  (auth.uid() = parent_id)
+  WITH CHECK (auth.uid() = parent_id);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 11. RECENT PLAYS
+-- Tracks the last N audio items each user has played (for "Continue" & history).
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.recent_plays (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  audio_id   UUID NOT NULL REFERENCES public.audio_content(id) ON DELETE CASCADE,
+  position   INTEGER NOT NULL DEFAULT 0,   -- seconds
+  played_at  TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, audio_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_recent_plays_user ON public.recent_plays(user_id, played_at DESC);
+
+ALTER TABLE public.recent_plays ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "recent_plays: users manage own"
+  ON public.recent_plays FOR ALL
+  USING  (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);

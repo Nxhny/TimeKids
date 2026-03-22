@@ -111,7 +111,8 @@ export async function addYouTubeAudio(req, res) {
     }
 
     // Store YouTube embed URL
-    const audio_url = `https://www.youtube.com/embed/${ytId}`;
+    // youtube-nocookie.com avoids cookie tracking and reduces embedding blocks
+    const audio_url = `https://www.youtube-nocookie.com/embed/${ytId}`;
 
     const audio = await audioModel.createAudio({
       title: title.trim(),

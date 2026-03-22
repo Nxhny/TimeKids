@@ -6,6 +6,7 @@
   <title>Page Not Found — TimeKids</title>
   <link rel="icon" href="/assets/logo.png" type="image/png"/>
   <link rel="stylesheet" href="/css/main.css"/>
+  <link rel="stylesheet" href="/css/i18n.css" />
   <style>
     body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:linear-gradient(160deg,#0f1229,#1a1f3c); }
     .notfound { text-align:center; color:white; padding:40px; }
@@ -19,18 +20,26 @@
 </head>
 <body>
 <div class="stars" id="stars"></div>
+<div id="lang-switcher-slot" style="position:fixed;top:20px;right:20px;z-index:100;"></div>
 <div class="notfound">
   <div class="big">🌙</div>
-  <h1>Lost in dreamland…</h1>
-  <p>This page seems to have drifted off to sleep.<br/>Let's get you back somewhere cozy.</p>
+  <h1><span data-i18n="404.h1">Lost in dreamland…</span></h1>
+  <p><span data-i18n="404.desc">This page seems to have drifted off to sleep.</span></p>
   <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-    <a href="/dashboard" class="btn btn-primary btn-lg">🏠 Go Home</a>
-    <a href="javascript:history.back()" class="btn btn-ghost btn-lg" style="color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.2);">← Go Back</a>
+    <a href="/dashboard" class="btn btn-primary btn-lg"><span data-i18n="404.home">🏠 Go Home</span></a>
+    <a href="javascript:history.back()" class="btn btn-ghost btn-lg" style="color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.2);"><span data-i18n="404.back">← Go Back</span></a>
   </div>
 </div>
 <script>
   const s=document.getElementById('stars');
   for(let i=0;i<60;i++){const d=document.createElement('span');d.className='star';const sz=Math.random()*3+1;d.style=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;opacity:${Math.random()*0.6+0.2};animation-delay:${Math.random()*4}s;animation-duration:${Math.random()*3+2}s;`;s.appendChild(d);}
+</script>
+
+<script type="module">
+  import { applyTranslations, renderLanguageSwitcher } from '/js/i18n.js';
+  applyTranslations();
+  renderLanguageSwitcher('#lang-switcher-slot');
+  window.addEventListener('langchange', () => applyTranslations());
 </script>
 </body>
 </html>
