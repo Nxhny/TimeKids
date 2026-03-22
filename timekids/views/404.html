@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Page Not Found — TimeKids</title>
+  <link rel="icon" href="/assets/logo.png" type="image/png"/>
+  <link rel="stylesheet" href="/css/main.css"/>
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:linear-gradient(160deg,#0f1229,#1a1f3c); }
+    .notfound { text-align:center; color:white; padding:40px; }
+    .notfound .big { font-size:clamp(5rem,20vw,10rem); line-height:1; margin-bottom:8px; animation:float-moon 4s ease-in-out infinite; }
+    @keyframes float-moon { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+    .notfound h1 { font-family:'Baloo 2',cursive; font-size:2.2rem; margin-bottom:12px; color:var(--primary); }
+    .notfound p { color:rgba(255,255,255,0.55); margin-bottom:32px; font-size:1rem; line-height:1.7; }
+    .stars { position:fixed; inset:0; pointer-events:none; overflow:hidden; }
+    .star { position:absolute; border-radius:50%; background:white; animation:twinkle 3s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div class="notfound">
+  <div class="big">🌙</div>
+  <h1>Lost in dreamland…</h1>
+  <p>This page seems to have drifted off to sleep.<br/>Let's get you back somewhere cozy.</p>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+    <a href="/dashboard" class="btn btn-primary btn-lg">🏠 Go Home</a>
+    <a href="javascript:history.back()" class="btn btn-ghost btn-lg" style="color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.2);">← Go Back</a>
+  </div>
+</div>
+<script>
+  const s=document.getElementById('stars');
+  for(let i=0;i<60;i++){const d=document.createElement('span');d.className='star';const sz=Math.random()*3+1;d.style=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;opacity:${Math.random()*0.6+0.2};animation-delay:${Math.random()*4}s;animation-duration:${Math.random()*3+2}s;`;s.appendChild(d);}
+</script>
+</body>
+</html>

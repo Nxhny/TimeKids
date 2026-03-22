@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel — TimeKids</title>
+  <link rel="icon" href="/assets/logo.png" type="image/png" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#6bb5d6" />
+  <link rel="stylesheet" href="/css/main.css" />
+  <style>
+    .admin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+    .admin-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; text-align: center; }
+    .admin-stat-val { font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; }
+    .admin-stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .data-table th { text-align: left; padding: 10px 14px; background: var(--sky-50); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+    .data-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--sky-50); }
+    .table-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  </style>
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="app-layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="/assets/logo.png" alt="TimeKids" />
+      <div class="sidebar-logo-text">Time<span>Kids</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <a href="/dashboard" class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Admin</div>
+        <a href="#" class="nav-link active" data-section="overview"><span class="nav-icon">📊</span> Overview</a>
+        <a href="#" class="nav-link" data-section="audio"><span class="nav-icon">🎵</span> All Audio</a>
+        <a href="#" class="nav-link" data-section="users"><span class="nav-icon">👥</span> Users</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="nav-link" id="logout-btn" style="width:100%;color:rgba(255,100,100,0.7);">
+        <span class="nav-icon">🚪</span> Logout
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <h2 style="font-size:1.3rem;">⚙️ Admin Panel</h2>
+      <button id="theme-toggle" class="btn btn-ghost btn-sm">🌙</button>
+    </header>
+
+    <div class="page-content">
+
+      <!-- Overview section -->
+      <div id="section-overview">
+        <div class="admin-stats">
+          <div class="admin-stat">
+            <div class="admin-stat-val" id="stat-total-audio" style="color:var(--primary);">—</div>
+            <div class="admin-stat-label">🎵 Total Tracks</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-val" id="stat-total-users" style="color:var(--accent);">—</div>
+            <div class="admin-stat-label">👥 Users</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-val" id="stat-total-favs" style="color:var(--warm);">—</div>
+            <div class="admin-stat-label">❤️ Favourites</div>
+          </div>
+        </div>
+        <p style="color:var(--text-muted);">Select a section from the sidebar to manage content and users.</p>
+      </div>
+
+      <!-- Audio section -->
+      <div id="section-audio" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <h3>All Audio Content</h3>
+        </div>
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Source</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="audio-table-body">
+              <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Users section -->
+      <div id="section-users" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <h3>User Management</h3>
+        </div>
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Plan</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:40px;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/js/admin.js"></script>
+</body>
+</html>
