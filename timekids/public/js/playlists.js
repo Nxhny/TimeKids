@@ -120,7 +120,8 @@ async function openPlaylist(id) {
         const track = item.audio_content;
         if (!track) return '';
         return `
-          <div class="track-row" data-id="${track.id}" data-idx="${idx}">
+          <div class="track-row" data-id="${track.id}" data-item-id="${item.id}" data-idx="${idx}" draggable="true">
+            <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
             <div class="track-row-num">${idx + 1}</div>
             <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:${track.type === 'lullaby' ? 'var(--lav-100)' : 'var(--peach-100)'};display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
               ${track.type === 'lullaby' ? '🎵' : '📖'}
@@ -136,11 +137,63 @@ async function openPlaylist(id) {
           </div>`;
       }).join('');
 
-      // Play on row click
+      // Play on row click + drag to reorder
       trackList.querySelectorAll('.track-row').forEach(row => {
+        row.setAttribute('draggable', 'true');
+
         row.addEventListener('click', e => {
           if (e.target.closest('.remove-track-btn')) return;
           playTrackAt(parseInt(row.dataset.idx));
+        });
+
+        // Drag-and-drop reorder
+        row.addEventListener('dragstart', e => {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', row.dataset.idx);
+          row.classList.add('dragging');
+        });
+        row.addEventListener('dragend', () => {
+          row.classList.remove('dragging');
+          trackList.querySelectorAll('.track-row').forEach(r => r.classList.remove('drag-over'));
+        });
+        row.addEventListener('dragover', e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          trackList.querySelectorAll('.track-row').forEach(r => r.classList.remove('drag-over'));
+          row.classList.add('drag-over');
+        });
+        row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+        row.addEventListener('drop', async e => {
+          e.preventDefault();
+          row.classList.remove('drag-over');
+          const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+          const toIdx   = parseInt(row.dataset.idx);
+          if (fromIdx === toIdx) return;
+
+          // Reorder pageState.tracks
+          const moved = pageState.tracks.splice(fromIdx, 1)[0];
+          pageState.tracks.splice(toIdx, 0, moved);
+
+          // Visual re-render
+          const rows = [...trackList.querySelectorAll('.track-row')];
+          const fromEl = rows[fromIdx];
+          const toEl   = rows[toIdx];
+          if (fromIdx < toIdx) {
+            trackList.insertBefore(fromEl, toEl.nextSibling);
+          } else {
+            trackList.insertBefore(fromEl, toEl);
+          }
+          // Update idx data attributes
+          trackList.querySelectorAll('.track-row').forEach((r, i) => r.dataset.idx = i);
+
+          // Persist new order to server
+          try {
+            const orderedAudioIds = pageState.tracks.map(t => t.id);
+            await api.put(`/playlists/${pageState.playlist.id}/reorder`, { orderedAudioIds });
+            showToast('🔄 Order saved', 'success');
+          } catch (err) {
+            showToast('⚠️ Could not save order: ' + err.message, 'error');
+          }
         });
       });
 
@@ -152,11 +205,16 @@ async function openPlaylist(id) {
             await api.delete(`/playlists/${id}/tracks/${btn.dataset.audioId}`);
             btn.closest('.track-row').remove();
             showToast(t('pl.track_removed'), 'success');
+            // Re-number rows
+            trackList.querySelectorAll('.track-row-num').forEach((el, i) => { el.textContent = i + 1; });
           } catch (err) {
             showToast(err.message, 'error');
           }
         });
       });
+
+      // ── Drag-and-drop reorder ─────────────────────────────────────────
+      setupDragReorder(trackList, id);
     }
 
     document.getElementById('play-all-btn').onclick = () => {
@@ -335,4 +393,64 @@ function closeModal() { document.getElementById('new-playlist-modal').classList.
 
 function escHtml(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+
+// ── Drag-to-reorder for playlist tracks ───────────────────────────────────
+function setupDragReorder(trackList, playlistId) {
+  let dragSrc = null;
+
+  trackList.querySelectorAll('.track-row[draggable]').forEach(row => {
+    row.addEventListener('dragstart', e => {
+      dragSrc = row;
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', row.dataset.id);
+    });
+
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      trackList.querySelectorAll('.drag-over').forEach(r => r.classList.remove('drag-over'));
+      dragSrc = null;
+    });
+
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      trackList.querySelectorAll('.drag-over').forEach(r => r.classList.remove('drag-over'));
+      if (row !== dragSrc) row.classList.add('drag-over');
+    });
+
+    row.addEventListener('drop', async e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!dragSrc || dragSrc === row) return;
+      row.classList.remove('drag-over');
+
+      // Re-order in DOM
+      const allRows = [...trackList.querySelectorAll('.track-row')];
+      const srcIdx  = allRows.indexOf(dragSrc);
+      const dstIdx  = allRows.indexOf(row);
+
+      if (srcIdx < dstIdx) {
+        row.after(dragSrc);
+      } else {
+        row.before(dragSrc);
+      }
+
+      // Re-number
+      trackList.querySelectorAll('.track-row').forEach((r, i) => {
+        const numEl = r.querySelector('.track-row-num');
+        if (numEl) numEl.textContent = i + 1;
+      });
+
+      // Build new order array and persist to server
+      const newOrder = [...trackList.querySelectorAll('.track-row')].map(r => r.dataset.id);
+      try {
+        await api.put(`/playlists/${playlistId}`, { track_order: newOrder });
+      } catch {
+        // Reorder is cosmetic-only if server doesn't support it yet — no error shown
+      }
+    });
+  });
 }

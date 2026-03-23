@@ -35,13 +35,26 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", 'https://www.youtube.com', 'https://cdn.jsdelivr.net'],
+        scriptSrc: ["'self'", "'unsafe-inline'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://cdn.jsdelivr.net'],
         frameSrc: ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
-        mediaSrc: ["'self'", 'https://*.supabase.co', 'https://storage.googleapis.com', 'blob:', 'data:'],
+        mediaSrc: ["'self'", 'https://*.supabase.co', 'https://storage.googleapis.com', 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://*.googlevideo.com', 'blob:', 'data:'],
         imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
-        connectSrc: ["'self'", 'https://*.supabase.co', process.env.SUPABASE_URL],
+        connectSrc: [
+          "'self'",
+          'https://*.supabase.co',
+          process.env.SUPABASE_URL,
+          'https://www.youtube.com',           // oEmbed API + player
+          'https://www.youtube-nocookie.com',  // privacy-enhanced player
+          'https://*.googlevideo.com',          // video CDN
+          'https://*.ytimg.com',                // thumbnails
+          'https://i.ytimg.com',
+          'https://fonts.googleapis.com',      // ✅ Google Fonts CSS
+          'https://fonts.gstatic.com',         // ✅ Google Fonts files
+        ],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        fontSrc:   ["'self'", 'https://fonts.gstatic.com'],
+        workerSrc: ["'self'", 'blob:'],          // YouTube player workers
+        childSrc:  ["'self'", 'blob:', 'https://www.youtube-nocookie.com'],
       },
     },
   })
@@ -75,8 +88,14 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── API Routes ────────────────────────────────────────────────────────────
+// Auth routes: only the auth limiter (stricter, prevents brute force)
 app.use('/api/auth', authLimiter);
-app.use('/api', apiLimiter, apiRoutes);
+// All API routes: general limiter + actual handlers
+// Note: apiLimiter does NOT apply to /api/auth (already covered above)
+app.use('/api', (req, res, next) => {
+  if (req.path.startsWith('/auth')) return next(); // auth already rate-limited
+  apiLimiter(req, res, next);
+}, apiRoutes);
 
 // ── SPA Fallback — serve views ────────────────────────────────────────────
 const viewsDir = path.join(__dirname, 'views');
@@ -89,6 +108,10 @@ app.get('/profile', (_, res) => res.sendFile(path.join(viewsDir, 'profile.html')
 app.get('/admin', (_, res) => res.sendFile(path.join(viewsDir, 'admin.html')));
 app.get('/playlists',  (_, res) => res.sendFile(path.join(viewsDir, 'playlists.html')));
 app.get('/children',   (_, res) => res.sendFile(path.join(viewsDir, 'children.html')));
+app.get('/forgot-password', (_, res) => res.sendFile(path.join(viewsDir, 'forgot-password.html')));
+app.get('/reset-password',  (_, res) => res.sendFile(path.join(viewsDir, 'reset-password.html')));
+app.get('/settings',        (_, res) => res.sendFile(path.join(viewsDir, 'settings.html')));
+app.get('/offline',         (_, res) => res.sendFile(path.join(viewsDir, 'offline.html')));;
 
 // ── 404 ────────────────────────────────────────────────────────────────────
 app.use((req, res) => {

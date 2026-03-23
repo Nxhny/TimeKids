@@ -43,6 +43,7 @@ export function buildAudioCard(track, isFavorited = false, idx = 0) {
     <div class="audio-card-actions">
       <button class="fav-btn ${isFavorited ? 'active' : ''}" title="Favourite">${isFavorited ? '❤️' : '🤍'}</button>
       <button class="add-pl-btn" title="Add to Playlist">📋</button>
+      <button class="fav-btn share-btn" title="Share">🔗</button>
       ${track.uploaded_by ? `<button class="fav-btn delete-btn" title="Delete">🗑️</button>` : ''}
     </div>
     <div class="audio-card-body">

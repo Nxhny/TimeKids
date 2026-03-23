@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth.js';
 import {
   listPlaylists, getPlaylist, createPlaylist,
   updatePlaylist, deletePlaylist, addTrack, removeTrack,
+  reorderPlaylist,
 } from '../controllers/playlistController.js';
 
 const router = Router();
@@ -17,5 +18,6 @@ router.put('/:id',          updatePlaylist);
 router.delete('/:id',       deletePlaylist);
 router.post('/:id/tracks',  addTrack);
 router.delete('/:id/tracks/:audioId', removeTrack);
+router.put   ('/:id/reorder', reorderPlaylist);
 
 export default router;

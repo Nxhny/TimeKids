@@ -21,8 +21,8 @@ function showMessage(text, type = 'error') {
 }
 
 function setLoading(btn, loading) {
-  const textEl    = btn.querySelector('#btn-text');
-  const spinnerEl = btn.querySelector('#btn-spinner');
+  const textEl    = btn.querySelector('span#btn-text');      // ✅ CORRIGÉ
+  const spinnerEl = btn.querySelector('span#btn-spinner');   // ✅ CORRIGÉ
   btn.disabled = loading;
   if (textEl)    textEl.style.opacity   = loading ? '0.5' : '1';
   if (spinnerEl) spinnerEl.style.display = loading ? 'inline' : 'none';

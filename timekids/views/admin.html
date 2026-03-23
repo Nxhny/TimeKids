@@ -81,6 +81,38 @@
       <div id="section-audio" style="display:none;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
           <h3>All Audio Content</h3>
+          <button class="btn btn-primary btn-sm" id="admin-add-track-btn">➕ Add Track (YouTube)</button>
+        </div>
+
+        <!-- Inline add-track form (collapsed by default) -->
+        <div id="admin-add-form" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:20px;">
+          <form id="admin-youtube-form" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:end;">
+            <div class="form-group" style="grid-column:1/-1;">
+              <label class="form-label">YouTube URL *</label>
+              <input class="form-input" type="url" name="youtube_url" placeholder="https://youtube.com/watch?v=…" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Title *</label>
+              <input class="form-input" type="text" name="title" placeholder="Track title" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Type *</label>
+              <select class="form-select" name="type" required>
+                <option value="">Select…</option>
+                <option value="lullaby">🎵 Lullaby</option>
+                <option value="story">📖 Story</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category *</label>
+              <input class="form-input" type="text" name="category" placeholder="e.g. Classical"/>
+            </div>
+            <div id="admin-form-msg" class="form-message" style="grid-column:1/-1;"></div>
+            <div style="grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end;">
+              <button type="button" class="btn btn-ghost" id="admin-cancel-form">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="admin-submit-btn">Add Track 🎵</button>
+            </div>
+          </form>
         </div>
         <div class="table-card">
           <table class="data-table">

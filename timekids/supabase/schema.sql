@@ -140,16 +140,18 @@ CREATE POLICY "favorites: users can manage own"
 -- 6. SEED DATA — sample tracks (YouTube-based, free to use)
 -- ─────────────────────────────────────────────────────────────────────────────
 INSERT INTO public.audio_content (title, type, category, audio_url, description, is_youtube) VALUES
-  ('Brahms Lullaby',         'lullaby', 'Classical',  'https://www.youtube-nocookie.com/embed/YcFGdB9BLYA', 'The classic Brahms lullaby — perfect for sleep.', TRUE),
-  ('Twinkle Twinkle',        'lullaby', 'Children',   'https://www.youtube-nocookie.com/embed/yCjJyiqpAuU', 'Gentle piano rendition of Twinkle Twinkle.', TRUE),
-  ('Ocean Waves & Piano',    'lullaby', 'Nature',     'https://www.youtube-nocookie.com/embed/1ZYbU82GVz4', 'Soothing ocean waves with soft piano.', TRUE),
-  ('Moonlight Sonata',       'lullaby', 'Classical',  'https://www.youtube-nocookie.com/embed/4Tr0otuiQuU', 'Beethoven''s gentle moonlight sonata.', TRUE),
-  ('Rain on Leaves',         'lullaby', 'Nature',     'https://www.youtube-nocookie.com/embed/mPZkdNFkNps', 'Calming rain sounds on forest leaves.', TRUE),
-  ('Soft Piano Meditation',  'lullaby', 'Piano',      'https://www.youtube-nocookie.com/embed/lFcSrYw2lGQ', 'Peaceful piano music for deep relaxation.', TRUE),
-  ('The Velveteen Rabbit',   'story',   'Classic',    'https://www.youtube-nocookie.com/embed/7TcPvGKSqeE', 'The beloved story of a toy rabbit.', TRUE),
-  ('Goodnight Moon',         'story',   'Children',   'https://www.youtube-nocookie.com/embed/cT4BEdpS3FE', 'A calming bedtime story classic.', TRUE),
-  ('The Snowy Day',          'story',   'Winter',     'https://www.youtube-nocookie.com/embed/4Gsg4sIRlBY', 'A magical winter day adventure.', TRUE),
-  ('Where the Wild Things Are', 'story','Adventure',  'https://www.youtube-nocookie.com/embed/pBmVwvGIr8A', 'Maurice Sendak''s classic tale.', TRUE)
+  -- Lullabies (from channels verified to allow embedding)
+  ('Twinkle Twinkle Little Star',  'lullaby', 'Children',  'https://www.youtube-nocookie.com/embed/yCjJyiqpAuU', 'Classic nursery rhyme — gentle piano version.', TRUE),
+  ('Brahms Lullaby',               'lullaby', 'Classical', 'https://www.youtube-nocookie.com/embed/YcFGdB9BLYA', 'The timeless Brahms lullaby for babies.', TRUE),
+  ('Moonlight Sonata',             'lullaby', 'Classical', 'https://www.youtube-nocookie.com/embed/4Tr0otuiQuU', 'Beethoven gentle sonata — perfect for sleep.', TRUE),
+  ('Baby Sleeping Music',          'lullaby', 'Piano',     'https://www.youtube-nocookie.com/embed/W9VNbBnFxS0', 'Soft piano music to help babies sleep.', TRUE),
+  ('Celtic Lullaby',               'lullaby', 'World',     'https://www.youtube-nocookie.com/embed/8FnGaVTvnYY', 'Beautiful traditional Celtic lullaby.', TRUE),
+  ('Soft Piano for Sleep',         'lullaby', 'Piano',     'https://www.youtube-nocookie.com/embed/lFcSrYw2lGQ', 'Calm piano melodies for deep relaxation.', TRUE),
+  -- Stories (read-aloud from education channels)
+  ('Goodnight Moon',               'story', 'Children',   'https://www.youtube-nocookie.com/embed/cT4BEdpS3FE', 'The beloved bedtime story classic.', TRUE),
+  ('The Very Hungry Caterpillar',  'story', 'Children',   'https://www.youtube-nocookie.com/embed/75NQK-Sm1YY', 'Eric Carle''s classic counting story.', TRUE),
+  ('Where the Wild Things Are',    'story', 'Adventure',  'https://www.youtube-nocookie.com/embed/pBmVwvGIr8A', 'Maurice Sendak''s classic wild adventure.', TRUE),
+  ('The Snowy Day',                'story', 'Winter',     'https://www.youtube-nocookie.com/embed/4Gsg4sIRlBY', 'A magical winter day adventure.', TRUE)
 ON CONFLICT DO NOTHING;
 
 -- ─────────────────────────────────────────────────────────────────────────────

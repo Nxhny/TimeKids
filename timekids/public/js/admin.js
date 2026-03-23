@@ -32,7 +32,7 @@ let adminUser;
       document.getElementById('section-overview').style.display = sec === 'overview' ? 'block' : 'none';
       document.getElementById('section-audio').style.display    = sec === 'audio'    ? 'block' : 'none';
       document.getElementById('section-users').style.display    = sec === 'users'    ? 'block' : 'none';
-      if (sec === 'audio') await loadAudioTable();
+      if (sec === 'audio') { await loadAudioTable(); setupAdminAddForm(); }
       if (sec === 'users') await loadUsersTable();
     });
   });
@@ -133,4 +133,59 @@ window.adminUpdatePlan = async (userId, plan) => {
 
 function escHtml(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+
+// ── Admin add-track form ─────────────────────────────────────────────────
+function setupAdminAddForm() {
+  const toggleBtn = document.getElementById('admin-add-track-btn');
+  const formDiv   = document.getElementById('admin-add-form');
+  const cancelBtn = document.getElementById('admin-cancel-form');
+  const form      = document.getElementById('admin-youtube-form');
+  const msgEl     = document.getElementById('admin-form-msg');
+  const submitBtn = document.getElementById('admin-submit-btn');
+
+  if (!toggleBtn || toggleBtn._wired) return;
+  toggleBtn._wired = true;
+
+  toggleBtn.addEventListener('click', () => {
+    const isOpen = formDiv.style.display !== 'none';
+    formDiv.style.display = isOpen ? 'none' : 'block';
+    toggleBtn.textContent = isOpen ? '➕ Add Track (YouTube)' : '✕ Cancel';
+  });
+
+  cancelBtn?.addEventListener('click', () => {
+    formDiv.style.display = 'none';
+    toggleBtn.textContent = '➕ Add Track (YouTube)';
+    form.reset();
+    msgEl.className = 'form-message';
+  });
+
+  form?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const body = Object.fromEntries(new FormData(form));
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ Adding…';
+    msgEl.className = 'form-message';
+
+    try {
+      await api.post('/audio/youtube', body);
+      msgEl.className = 'form-message success';
+      msgEl.innerHTML = '✅ Track added successfully!';
+      form.reset();
+      await loadAudioTable();
+      await loadStats();
+      setTimeout(() => {
+        msgEl.className = 'form-message';
+        formDiv.style.display = 'none';
+        toggleBtn.textContent = '➕ Add Track (YouTube)';
+      }, 2000);
+    } catch (err) {
+      msgEl.className = 'form-message error';
+      msgEl.innerHTML = `❌ ${err.message}`;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Add Track 🎵';
+    }
+  });
 }

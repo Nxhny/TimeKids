@@ -161,8 +161,10 @@ export async function uploadAudio(req, res) {
       });
     }
 
-    // Upload to Supabase Storage
+    // ✅ CORRECTION : Upload to Supabase Storage avec meilleure gestion d'erreur
     const filename = `${userId}/${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    console.log(`[audioController.uploadAudio] Uploading file: ${filename}`);
+    
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from('audio-files')
       .upload(filename, file.buffer, {
@@ -170,12 +172,35 @@ export async function uploadAudio(req, res) {
         upsert: false,
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error(`[audioController.uploadAudio] Supabase Storage Error:`, uploadError);
+      
+      // Messages d'erreur spécifiques
+      if (uploadError.message?.includes('not found')) {
+        return res.status(500).json({ 
+          error: 'Bucket "audio-files" does not exist. Please contact administrator to set up storage.',
+          details: uploadError.message
+        });
+      }
+      if (uploadError.message?.includes('permission')) {
+        return res.status(500).json({ 
+          error: 'Storage permissions denied. Check bucket policies.',
+          details: uploadError.message
+        });
+      }
+      throw uploadError;
+    }
+
+    console.log(`[audioController.uploadAudio] File uploaded: ${filename}`);
 
     // Get public URL
     const { data: urlData } = supabaseAdmin.storage
       .from('audio-files')
       .getPublicUrl(filename);
+
+    if (!urlData?.publicUrl) {
+      throw new Error('Failed to get public URL from Supabase Storage');
+    }
 
     const audio = await audioModel.createAudio({
       title: title.trim(),
@@ -187,10 +212,14 @@ export async function uploadAudio(req, res) {
       is_youtube: false,
     });
 
+    console.log(`[audioController.uploadAudio] Audio record created: ${audio.id}`);
     return res.status(201).json({ message: 'Audio uploaded successfully!', audio });
   } catch (err) {
-    console.error('[audioController.uploadAudio]', err);
-    return res.status(500).json({ error: 'Failed to upload audio.' });
+    console.error('[audioController.uploadAudio] Error:', err.message || err);
+    return res.status(500).json({ 
+      error: 'Failed to upload audio.',
+      details: err.message // ✅ NOUVEAU : Affiche l'erreur réelle au client
+    });
   }
 }
 
@@ -231,13 +260,23 @@ export async function updateAudio(req, res) {
 
 /** Extract YouTube video ID from various URL formats */
 function extractYouTubeId(url) {
+  // Normalise: trim whitespace, handle youtu.be/ID?si=... and watch?v=ID&t=...
+  const clean = (url || '').trim();
   const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,
-    /youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/,
+    // Standard watch URL: youtube.com/watch?v=ID or &v=ID
+    /[?&]v=([A-Za-z0-9_-]{11})/,
+    // Short URL: youtu.be/ID
+    /youtu\.be\/([A-Za-z0-9_-]{11})/,
+    // Embed URL (both domains): /embed/ID
+    /\/embed\/([A-Za-z0-9_-]{11})/,
+    // Shorts: /shorts/ID
+    /\/shorts\/([A-Za-z0-9_-]{11})/,
+    // Music: music.youtube.com/watch?v=ID
+    /music\.youtube\.com.*[?&]v=([A-Za-z0-9_-]{11})/,
   ];
   for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
+    const m = clean.match(pattern);
+    if (m) return m[1];
   }
   return null;
 }

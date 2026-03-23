@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Offline — TimeKids 🌙</title>
+  <link rel="icon" href="/assets/logo.png" type="image/png"/>
+  <link rel="stylesheet" href="/css/main.css"/>
+  <style>
+    body { display:flex;align-items:center;justify-content:center;min-height:100vh;
+           background:linear-gradient(160deg,#0f1229,#1a1f3c); }
+    .wrap { text-align:center;color:white;padding:40px;max-width:420px; }
+    .big  { font-size:clamp(4rem,15vw,8rem);line-height:1;margin-bottom:12px;
+            animation:float-moon 4s ease-in-out infinite; }
+    @keyframes float-moon { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-18px)} }
+    h1   { font-family:'Baloo 2',cursive;font-size:2rem;color:var(--primary);margin-bottom:10px; }
+    p    { color:rgba(255,255,255,.55);line-height:1.7;margin-bottom:28px; }
+    .retry-btn { background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+                 color:white;border:none;padding:14px 32px;border-radius:999px;
+                 font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;
+                 cursor:pointer;box-shadow:0 4px 18px rgba(107,181,214,.4);
+                 transition:transform .2s,box-shadow .2s; }
+    .retry-btn:hover { transform:translateY(-2px);box-shadow:0 6px 24px rgba(107,181,214,.5); }
+    .status { margin-top:20px;font-size:.78rem;color:rgba(255,255,255,.3); }
+    .stars  { position:fixed;inset:0;pointer-events:none;overflow:hidden; }
+    .star   { position:absolute;border-radius:50%;background:white;
+              animation:twinkle var(--dur,3s) ease-in-out infinite;
+              animation-delay:var(--del,0s); }
+    @keyframes twinkle { 0%,100%{opacity:var(--op,.4)} 50%{opacity:.1} }
+  </style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div class="wrap">
+  <div class="big">🌙</div>
+  <h1>You're offline</h1>
+  <p>TimeKids needs an internet connection to play music. Check your Wi-Fi or mobile data, then try again.</p>
+  <button class="retry-btn" onclick="location.reload()">🔄 Try Again</button>
+  <div class="status" id="status">Waiting for connection…</div>
+</div>
+<script>
+  // Stars
+  const s=document.getElementById('stars');
+  for(let i=0;i<50;i++){
+    const d=document.createElement('span');
+    d.className='star';
+    const sz=Math.random()*2.5+1;
+    d.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--op:${(Math.random()*.5+.2).toFixed(2)};--dur:${(Math.random()*3+2).toFixed(1)}s;--del:${(Math.random()*4).toFixed(1)}s;`;
+    s.appendChild(d);
+  }
+  // Auto-reload when back online
+  window.addEventListener('online', () => {
+    document.getElementById('status').textContent = '✅ Back online! Reloading…';
+    setTimeout(() => location.reload(), 800);
+  });
+  window.addEventListener('offline', () => {
+    document.getElementById('status').textContent = 'Still offline…';
+  });
+</script>
+</body>
+</html>

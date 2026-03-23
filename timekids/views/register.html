@@ -129,53 +129,57 @@
 <div id="lang-switcher-slot" style="position:fixed;bottom:20px;right:20px;z-index:100;"></div>
 <script type="module" src="/js/auth.js"></script>
 <script type="module">
-import { applyTranslations, renderLanguageSwitcher } from '/js/i18n.js';
-document.addEventListener('DOMContentLoaded', () => { applyTranslations(); renderLanguageSwitcher('#lang-switcher-slot'); });
+import { applyTranslations, renderLanguageSwitcher, t } from '/js/i18n.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyTranslations();
+  renderLanguageSwitcher('#lang-switcher-slot');
+});
 window.addEventListener('langchange', () => applyTranslations());
-</script>
-<script>
-  // Toggle password visibility
-  document.getElementById('toggle-pw').addEventListener('click', function() {
-    const pw = document.getElementById('password');
-    pw.type = pw.type === 'password' ? 'text' : 'password';
-    this.textContent = pw.type === 'password' ? '👁️' : '🙈';
+
+// ✅ Toggle password visibility dans le module
+document.getElementById('toggle-pw')?.addEventListener('click', function() {
+  const pw = document.getElementById('password');
+  pw.type = pw.type === 'password' ? 'text' : 'password';
+  this.textContent = pw.type === 'password' ? '👁️' : '🙈';
+});
+
+// ✅ Password strength meter avec traductions
+document.getElementById('password')?.addEventListener('input', function() {
+  const val = this.value;
+  const el = document.getElementById('pw-strength');
+  const fill = document.getElementById('strength-fill');
+  const text = document.getElementById('strength-text');
+
+  if (!val) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+
+  // ✅ UTILISER LES CLÉS DE TRADUCTION AU LIEU DE LABELS STATIQUES
+  const levels = [
+    { w: '25%', bg: '#f87171', key: 'pw.weak'   },
+    { w: '50%', bg: '#fbbf24', key: 'pw.fair'   },
+    { w: '75%', bg: '#60a5fa', key: 'pw.good'   },
+    { w: '100%', bg: '#34d399', key: 'pw.strong' },
+  ];
+  const lvl = levels[Math.max(score - 1, 0)];
+  fill.style.width = lvl.w;
+  fill.style.background = lvl.bg;
+  text.textContent = t(lvl.key);  // ✅ Traduction dynamique avec t()
+});
+
+// Plan card selection
+document.querySelectorAll('input[name="plan"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+    this.closest('.plan-card').classList.add('selected');
   });
-
-  // Password strength meter
-  document.getElementById('password').addEventListener('input', function() {
-    const val = this.value;
-    const el = document.getElementById('pw-strength');
-    const fill = document.getElementById('strength-fill');
-    const text = document.getElementById('strength-text');
-
-    if (!val) { el.style.display = 'none'; return; }
-    el.style.display = 'block';
-
-    let score = 0;
-    if (val.length >= 8) score++;
-    if (/[A-Z]/.test(val)) score++;
-    if (/[0-9]/.test(val)) score++;
-    if (/[^A-Za-z0-9]/.test(val)) score++;
-
-    const levels = [
-      { w: '25%', bg: '#f87171', label: 'Weak' },
-      { w: '50%', bg: '#fbbf24', label: 'Fair' },
-      { w: '75%', bg: '#60a5fa', label: 'Good' },
-      { w: '100%', bg: '#34d399', label: 'Strong 💪' },
-    ];
-    const lvl = levels[score - 1] || levels[0];
-    fill.style.width = lvl.w;
-    fill.style.background = lvl.bg;
-    text.textContent = lvl.label;
-  });
-
-  // Plan card selection
-  document.querySelectorAll('input[name="plan"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-      document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-      this.closest('.plan-card').classList.add('selected');
-    });
-  });
+});
 </script>
 </body>
 </html>

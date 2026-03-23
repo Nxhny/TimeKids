@@ -39,6 +39,10 @@
 </head>
 <body>
 <div id="toast-container"></div>
+<!-- Offline banner -->
+<div id="offline-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:#f59e0b;color:#1c1917;text-align:center;padding:8px;font-weight:700;font-size:.85rem;">
+  📡 You are offline — some content may not load
+</div>
 <div class="kbd-hint" id="kbd-hint"></div>
 
 <div class="app-layout">
@@ -64,7 +68,8 @@
       <div class="nav-section">
         <div class="nav-section-title" data-i18n="nav.library">My Library</div>
         <a href="/playlists" class="nav-link"><span class="nav-icon">📋</span> <span data-i18n="nav.playlists">Playlists</span></a>
-        <a href="/children" class="nav-link"><span class="nav-icon">👶</span> <span data-i18n="child.nav">Child Profiles</span></a>
+        <a href="/children"  class="nav-link"><span class="nav-icon">👶</span> <span data-i18n="child.nav">Child Profiles</span></a>
+        <a href="/settings" class="nav-link"><span class="nav-icon">⚙️</span> <span data-i18n="settings.nav">Settings</span></a>
         <a href="#" class="nav-link" data-view="my-uploads"><span class="nav-icon">📤</span> <span data-i18n="nav.uploads">My Uploads</span></a>
         <a href="#" class="nav-link" id="btn-add-track"><span class="nav-icon">➕</span> <span data-i18n="nav.add_track">Add Track</span></a>
       </div>
@@ -119,6 +124,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
         <div id="lang-switcher-topbar" style="position:relative;"></div>
+        <button id="kbd-help-btn" class="btn btn-ghost btn-sm" title="Keyboard shortcuts">⌨️</button>
         <button id="theme-toggle" class="btn btn-ghost btn-sm" title="Toggle dark mode">🌙</button>
         <div style="position:relative;">
           <button id="sleep-timer-btn" class="btn btn-ghost btn-sm">⏱️ <span id="timer-label">Timer</span></button>
@@ -236,7 +242,49 @@
               <div class="form-group"><label class="form-label">Type *</label><select class="form-select" name="type" required><option value="">Select…</option><option value="lullaby">🎵 Lullaby</option><option value="story">📖 Story</option></select></div>
               <div class="form-group"><label class="form-label">Category *</label><input class="form-input" type="text" name="category" placeholder="e.g. Piano, Nature…" required /></div>
             </div>
-            <div class="form-group"><label class="form-label">YouTube URL *</label><input class="form-input" type="url" name="youtube_url" placeholder="https://youtube.com/watch?v=…" required /><small style="color:var(--text-muted);font-size:.78rem;margin-top:4px;">Supports youtube.com, youtu.be, and Shorts.</small></div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="modal.yt_url">YouTube URL *</label>
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <input class="form-input" type="url" name="youtube_url" id="yt-url-input"
+                  placeholder="https://youtube.com/watch?v=…" required
+                  style="flex:1;" data-i18n-placeholder="modal.yt_url"/>
+                <button type="button" id="yt-test-btn" class="btn btn-ghost btn-sm"
+                  style="flex-shrink:0;padding:11px 14px;" title="Test if this video can be embedded">
+                  🔍 Test
+                </button>
+              </div>
+              <small style="color:var(--text-muted);font-size:.78rem;margin-top:4px;" data-i18n="modal.yt_hint">
+                Supports youtube.com, youtu.be, Shorts, and Music links.
+              </small>
+
+              <!-- Live preview panel -->
+              <div id="yt-preview-panel" style="display:none;margin-top:12px;border-radius:var(--radius-md);overflow:hidden;background:#000;position:relative;">
+                <div id="yt-preview-loading" style="aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;background:#111;color:rgba(255,255,255,.4);font-size:.85rem;gap:8px;">
+                  ⏳ <span data-i18n="yt.testing">Testing…</span>
+                </div>
+                <iframe id="yt-preview-iframe" src="" allow="autoplay;encrypted-media" allowfullscreen
+                  style="width:100%;aspect-ratio:16/9;border:0;display:none;"></iframe>
+                <div id="yt-preview-error" style="display:none;aspect-ratio:16/9;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;text-align:center;background:linear-gradient(135deg,#1a1f3c,#300);">
+                  <span style="font-size:2rem;">🚫</span>
+                  <div style="color:white;font-weight:700;font-size:.9rem;" data-i18n="yt.error_title">Embedding disabled</div>
+                  <p style="color:rgba(255,255,255,.55);font-size:.78rem;max-width:260px;" data-i18n="yt.error_desc">
+                    The video owner has disabled playback outside YouTube.
+                  </p>
+                  <div style="background:rgba(255,255,255,.08);padding:5px 12px;border-radius:99px;font-size:.7rem;color:rgba(255,255,255,.45);" id="yt-preview-err-code"></div>
+                  <p style="color:rgba(255,165,0,.8);font-size:.75rem;margin-top:4px;" data-i18n="yt.still_save">
+                    You can still save it — users will open it on YouTube.
+                  </p>
+                </div>
+                <div id="yt-preview-ok" style="display:none;position:absolute;top:8px;right:8px;background:rgba(52,211,153,.9);color:white;font-size:.72rem;font-weight:800;padding:4px 10px;border-radius:99px;">
+                  ✅ <span data-i18n="yt.embeddable">Embeddable!</span>
+                </div>
+              </div>
+
+              <!-- Warning note -->
+              <div style="margin-top:8px;padding:8px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius-md);font-size:.76rem;color:#92400e;" data-i18n="yt.embed_warning">
+                ⚠️ Some videos disable embedding — they will open on YouTube instead.
+              </div>
+            </div>
             <div class="form-group"><label class="form-label">Description (optional)</label><textarea class="form-input" name="description" rows="2" style="resize:vertical;"></textarea></div>
             <div id="yt-form-msg" class="form-message"></div>
           </div>
@@ -281,7 +329,7 @@
         <div id="yt-player"></div>
 
         <!-- Error fallback — shown when video can't embed (error 101/150/153) -->
-        <div id="yt-embed-error" style="display:none;position:absolute;inset:0;background:linear-gradient(135deg,#1a1f3c,#0f1229);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center;border-radius:var(--radius-md);">
+        <div id="yt-embed-error" style="display:none;position:absolute;inset:0;background:linear-gradient(135deg,#1a1f3c,#0f1229);flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center;border-radius:var(--radius-md);z-index:10;">
           <span style="font-size:2.5rem;">🚫</span>
           <div style="color:white;font-weight:800;font-size:1rem;" data-i18n="yt.error_title">Embedding disabled</div>
           <p style="color:rgba(255,255,255,.55);font-size:.85rem;max-width:280px;" data-i18n="yt.error_desc">The video owner has disabled playback outside YouTube. Open it directly:</p>
@@ -344,6 +392,41 @@
       <button class="btn btn-primary btn-lg" id="onboard-close-btn" style="width:100%;justify-content:center;">
         <span data-i18n="onboard.start">Start Exploring ✨</span>
       </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ KEYBOARD SHORTCUTS MODAL ══ -->
+<div class="modal-backdrop" id="kbd-modal">
+  <div class="modal kbd-modal">
+    <div class="modal-header">
+      <h3>⌨️ <span data-i18n="kbd.title">Keyboard Shortcuts</span></h3>
+      <button class="btn btn-ghost btn-icon-sm" id="close-kbd-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="kbd-grid">
+        <span class="kbd">Space</span>
+        <span class="kbd-desc" data-i18n="kbd.play_pause">Play / Pause</span>
+
+        <span class="kbd">← →</span>
+        <span class="kbd-desc" data-i18n="kbd.seek">Seek −10s / +10s</span>
+
+        <span class="kbd">Shift + ←</span>
+        <span class="kbd-desc" data-i18n="kbd.prev">Previous track</span>
+
+        <span class="kbd">Shift + →</span>
+        <span class="kbd-desc" data-i18n="kbd.next">Next track</span>
+
+        <span class="kbd">↑ ↓</span>
+        <span class="kbd-desc" data-i18n="kbd.volume">Volume up / down</span>
+
+        <span class="kbd">M</span>
+        <span class="kbd-desc" data-i18n="kbd.mute">Toggle mute</span>
+
+        <span class="kbd">?</span>
+        <span class="kbd-desc" data-i18n="kbd.help">Show / hide this help</span>
+      </div>
     </div>
   </div>
 </div>

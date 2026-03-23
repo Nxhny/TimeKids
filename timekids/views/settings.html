@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Settings — TimeKids 🌙</title>
+  <link rel="icon" href="/assets/logo.png" type="image/png"/>
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#6bb5d6"/>
+  <link rel="stylesheet" href="/css/main.css"/>
+  <link rel="stylesheet" href="/css/i18n.css"/>
+  <style>
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media(max-width:800px) { .settings-grid { grid-template-columns: 1fr; } }
+
+    .settings-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 28px; }
+    .settings-card h3 { font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+
+    .danger-card { background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius-xl); padding: 28px; }
+    .danger-card h3 { color: #991b1b; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width:600px) { .form-row { grid-template-columns: 1fr; } }
+
+    .save-indicator {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .82rem; font-weight: 700; color: var(--success);
+      opacity: 0; transition: opacity .3s;
+    }
+    .save-indicator.show { opacity: 1; }
+  </style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="/assets/logo.png" alt="TimeKids"/>
+      <div class="sidebar-logo-text">Time<span>Kids</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title" data-i18n="nav.discover">Discover</div>
+        <a href="/dashboard" class="nav-link"><span class="nav-icon">🏠</span> <span data-i18n="nav.all">All Content</span></a>
+        <a href="/dashboard?view=favorites" class="nav-link"><span class="nav-icon">❤️</span> <span data-i18n="nav.favorites">Favourites</span></a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title" data-i18n="nav.library">My Library</div>
+        <a href="/profile"  class="nav-link"><span class="nav-icon">👤</span> <span data-i18n="nav.profile">My Profile</span></a>
+        <a href="/children" class="nav-link"><span class="nav-icon">👶</span> <span data-i18n="child.nav">Child Profiles</span></a>
+        <a href="/settings" class="nav-link active"><span class="nav-icon">⚙️</span> <span data-i18n="settings.nav">Settings</span></a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div id="lang-switcher-slot" style="margin-bottom:8px;"></div>
+      <a href="/profile" class="nav-link" style="margin-bottom:6px;">
+        <div id="user-avatar" style="width:28px;height:28px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:.85rem;color:white;font-weight:700;">?</div>
+        <div id="user-name" style="color:rgba(255,255,255,.85);font-size:.88rem;font-weight:700;">…</div>
+      </a>
+      <button class="nav-link" id="logout-btn" style="width:100%;color:rgba(255,100,100,.7);">
+        <span class="nav-icon">🚪</span> <span data-i18n="nav.logout">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <h2 style="font-family:var(--font-display);font-size:1.3rem;font-weight:800;" data-i18n="settings.title">⚙️ Settings</h2>
+      <button id="theme-toggle" class="btn btn-ghost btn-sm">🌙</button>
+    </header>
+
+    <div class="page-content">
+      <div class="settings-grid">
+
+        <!-- ── Profile info ── -->
+        <div class="settings-card">
+          <h3>👤 <span data-i18n="settings.profile_section">Profile Information</span></h3>
+          <form id="profile-form" style="display:flex;flex-direction:column;gap:14px;">
+            <!-- Avatar emoji picker -->
+            <div class="form-group">
+              <label class="form-label" data-i18n="child.avatar_label">Avatar</label>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <div id="current-avatar-display"
+                  style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;color:white;flex-shrink:0;cursor:pointer;"
+                  title="Click to change avatar">?</div>
+                <div style="flex:1;">
+                  <div style="font-weight:700;font-size:.9rem;margin-bottom:4px;" id="avatar-name-preview">—</div>
+                  <small style="color:var(--text-muted);font-size:.78rem;" data-i18n="child.pick_emoji">Pick an avatar below</small>
+                </div>
+              </div>
+              <!-- Emoji grid -->
+              <div id="settings-emoji-grid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:8px;"></div>
+              <input type="hidden" id="avatar_emoji_input" name="avatar_emoji" value=""/>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="register.name">Your name</label>
+              <input class="form-input" type="text" id="display_name" name="display_name" placeholder="Your name" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="settings.email_label">Email (read-only)</label>
+              <input class="form-input" type="email" id="email_display" disabled style="opacity:.6;cursor:not-allowed;"/>
+            </div>
+            <div id="profile-form-msg" class="form-message"></div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <button type="submit" class="btn btn-primary" id="save-profile-btn">
+                <span data-i18n="settings.save_profile">Save Name</span>
+              </button>
+              <span class="save-indicator" id="profile-saved">✅ <span data-i18n="settings.saved">Saved!</span></span>
+            </div>
+          </form>
+        </div>
+
+        <!-- ── Change password ── -->
+        <div class="settings-card">
+          <h3>🔑 <span data-i18n="settings.password_section">Change Password</span></h3>
+          <form id="password-form" style="display:flex;flex-direction:column;gap:14px;">
+            <div class="form-group">
+              <label class="form-label" data-i18n="settings.current_pw">Current Password</label>
+              <input class="form-input" type="password" id="current_password" name="current_password"
+                placeholder="••••••••" autocomplete="current-password"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="reset.new_pw">New Password</label>
+              <input class="form-input" type="password" id="new_password" name="new_password"
+                placeholder="At least 8 characters" autocomplete="new-password"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="reset.confirm_pw">Confirm New Password</label>
+              <input class="form-input" type="password" id="confirm_password" name="confirm_password"
+                placeholder="Repeat new password" autocomplete="new-password"/>
+            </div>
+            <div id="password-form-msg" class="form-message"></div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <button type="submit" class="btn btn-primary" id="save-password-btn">
+                <span data-i18n="settings.save_password">Update Password</span>
+              </button>
+              <span class="save-indicator" id="password-saved">✅ <span data-i18n="settings.saved">Saved!</span></span>
+            </div>
+          </form>
+        </div>
+
+        <!-- ── Language ── -->
+        <div class="settings-card">
+          <h3>🌍 <span data-i18n="language.label">Language</span></h3>
+          <p style="color:var(--text-secondary);font-size:.88rem;margin-bottom:16px;" data-i18n="settings.language_desc">
+            Choose the language for the entire app.
+          </p>
+          <div id="lang-switcher-settings"></div>
+        </div>
+
+        <!-- ── Appearance ── -->
+        <div class="settings-card">
+          <h3>🎨 <span data-i18n="settings.appearance">Appearance</span></h3>
+          <p style="color:var(--text-secondary);font-size:.88rem;margin-bottom:16px;" data-i18n="settings.theme_desc">
+            Switch between light and dark mode.
+          </p>
+          <div style="display:flex;gap:12px;">
+            <button class="btn btn-ghost" id="theme-light-btn" style="flex:1;justify-content:center;">
+              ☀️ <span data-i18n="settings.light_mode">Light</span>
+            </button>
+            <button class="btn btn-primary" id="theme-dark-btn" style="flex:1;justify-content:center;">
+              🌙 <span data-i18n="settings.dark_mode">Dark</span>
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /settings-grid -->
+
+      <!-- ── Danger zone ── -->
+      <div class="danger-card" style="margin-top:20px;">
+        <h3>⚠️ <span data-i18n="settings.danger_zone">Danger Zone</span></h3>
+        <p style="color:#991b1b;font-size:.88rem;margin-bottom:16px;" data-i18n="settings.delete_desc">
+          Permanently delete your account and all data. This cannot be undone.
+        </p>
+        <button class="btn btn-danger" id="delete-account-btn" data-i18n="settings.delete_btn">
+          🗑️ Delete My Account
+        </button>
+      </div>
+
+    </div><!-- /page-content -->
+  </div>
+</div>
+
+<!-- Delete account confirmation modal -->
+<div class="modal-backdrop" id="delete-modal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h3 style="color:#991b1b;">⚠️ <span data-i18n="settings.delete_confirm_title">Delete Account</span></h3>
+      <button class="btn btn-ghost btn-icon-sm" id="close-delete-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);margin-bottom:20px;" data-i18n="settings.delete_confirm_desc">
+        This will permanently delete your account, all your uploads, playlists, and favourites. Enter your password to confirm.
+      </p>
+      <div class="form-group">
+        <label class="form-label" data-i18n="settings.confirm_pw_label">Your Password</label>
+        <input class="form-input" type="password" id="delete-password" placeholder="Enter password to confirm"/>
+      </div>
+      <div id="delete-msg" class="form-message" style="margin-top:10px;"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+        <button class="btn btn-ghost" id="cancel-delete-btn" data-i18n="modal.cancel">Cancel</button>
+        <button class="btn btn-danger" id="confirm-delete-btn" data-i18n="settings.delete_btn">🗑️ Delete My Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/js/settings.js"></script>
+</body>
+</html>

@@ -79,3 +79,16 @@ export async function removeTrack(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
+
+/** PUT /api/playlists/:id/reorder — body: { orderedAudioIds: [...] } */
+export async function reorderPlaylist(req, res) {
+  try {
+    const { orderedAudioIds } = req.body;
+    if (!Array.isArray(orderedAudioIds))
+      return res.status(400).json({ error: 'orderedAudioIds must be an array.' });
+    await playlistModel.reorderPlaylist(req.params.id, req.user.id, orderedAudioIds);
+    return res.json({ message: 'Playlist reordered.' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+}

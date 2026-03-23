@@ -133,3 +133,22 @@ export async function removeFromPlaylist(playlistId, audioId, userId) {
   if (error) throw error;
   return true;
 }
+
+/** Reorder playlist items by providing new ordered array of audio IDs */
+export async function reorderPlaylist(playlistId, userId, orderedAudioIds) {
+  // Verify ownership
+  const { data: pl, error: plErr } = await supabaseAdmin
+    .from('playlists').select('id').eq('id', playlistId).eq('user_id', userId).single();
+  if (plErr) throw new Error('Playlist not found or access denied.');
+
+  // Update position for each item
+  const updates = orderedAudioIds.map((audioId, position) =>
+    supabaseAdmin
+      .from('playlist_items')
+      .update({ position })
+      .eq('playlist_id', playlistId)
+      .eq('audio_id', audioId)
+  );
+  await Promise.all(updates);
+  return true;
+}
